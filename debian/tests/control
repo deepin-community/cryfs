@@ -1,0 +1,15 @@
+
+# Test cryfs creation and mounting
+# This does not work in lxc - fuse and containers do not get along
+Tests: mounttest.py
+Depends: @, python3-pexpect, haveged
+Restrictions: isolation-machine
+
+# Britney debci does not currently (12/20) support the isolation-machine
+# restriction, leading to a 'neutral' result if mounttest is the only test.
+# Unfortunatly, there is a bug in britney such that, if there is an
+# infrastructure-based failure for a particular version/architecture, that
+# result is preferred over a subsequent 'neutral', which can lead to a
+# permanent transition block.
+Tests: optiontest
+Depends: @

@@ -1,0 +1,219 @@
+Version 0.10.2
+---------------
+Fixed bugs:
+* Fix occasional crash in mkdir() on Windows
+* Fix a race condition when a file descriptor is closed while there's read/write requests for that file being processed.
+
+Improvements:
+* Better logging when local state can't be loaded
+
+Other:
+* Updated to crypto++ 8.2
+
+
+Version 0.10.1
+---------------
+Fixed bugs:
+* If file system migration encounters files or folders with the wrong format in the base directory, it now just ignores them instead of crashing.
+* When trying to migrate a file system from CryFS 0.9.3 or older, show an error message suggesting to first open it with 0.9.10 because we can't load that anymore.
+* The '--unmount-idle' parameter works again
+* Fix building with boost 1.67
+
+Compatibility:
+* Fixed some incompatibilities with systems using the musl libc
+* Use boost::stacktrace instead of libbacktrace to build stack traces. This fixes a segfault issue with platforms using libexecinfo and is generally more portable.
+
+Other:
+* Updated to crypto++ 8.1
+* Updated to DokanY 1.2.1
+* Unit tests can now be run from any directory
+
+
+Version 0.10.0
+---------------
+New Features & Improvements:
+* Experimental Windows support
+* Integrity checks ensure you notice when someone modifies your file system.
+* File system nodes (files, directories, symlinks) store a parent pointer to the directory that contains them. This information can be used in later versions to resolve some synchronization conflicts.
+* Allow mounting using system mount tool and /etc/fstab (e.g. mount -t fuse.cryfs basedir mountdir)
+* Performance improvements
+* Use relatime instead of strictatime (further performance improvement)
+* Pass fuse options directly to cryfs (i.e. 'cryfs basedir mountdir -o allow_other' instead of 'cryfs basedir mountdir -- -o allow_other')
+* CryFS tells the operating system to lock the encryption key to memory, i.e. not swap it to the disk (note: this is best-effort and cannot be guaranteed. Hibernation, for example, will still write the encryption key to the disk).
+* New block size options: 4KB and 16KB
+* New default block size: 16KB. This should decrease the size of the ciphertext directory for most users.
+* Increased scrypt hardness to (N=1048576, r=4, p=8) to make it harder to crack the key while allowing cryfs to take advantage of multicore machines.
+* cryfs-unmount tool to unmount filesystems
+
+Fixed bugs:
+* `du` shows correct file system size on Mac OS X.
+* On Mac OS X, Finder shows the correct name for the mount directory
+
+
+Version 0.9.10
+--------------
+Fixed bugs:
+* Fixed occasional deadlock (https://github.com/cryfs/cryfs/issues/64)
+* Fix for reading empty files out of bounds
+* Fixed race condition (https://github.com/cryfs/cryfs/issues/224 and https://github.com/cryfs/cryfs/issues/243)
+
+
+Version 0.9.9
+--------------
+Improvements:
+* Add --allow-filesystem-upgrade option which will upgrade old file systems without asking the user. This will be especially helpful for GUI tools.
+* Add --version option that shows the CryFS version and exits.
+* When CryFS fails to load a file system, the process stops with a helpful error code, which can be used by GUI tools to show detailed messages.
+* Only migrate a file system if the underlying storage format changed
+
+
+Version 0.9.8
+--------------
+Compatibility:
+* Runs on Debian with FreeBSD kernel
+* Runs on FreeBSD 11.1
+* Works with Crypto++ 6.0
+
+Improvements:
+* added a man page
+
+Fixed bugs:
+* `du` shows correct file system size
+* Updated spdlog dependency to fix build on newer systems
+
+Version 0.9.7
+--------------
+Compatibility:
+* Runs on FreeBSD
+* Works with Clang++ 3.8 (Debian experimental or newer Ubuntu systems)
+* Works with GCC 7
+
+Version 0.9.6
+---------------
+Fixed bugs:
+* Fix potential deadlock
+* Fix potential crash
+
+Improvements:
+* Allow building with -DCRYFS_UPDATE_CHECKS=off, which will create an executable with disabled update checks (the alternative to disable them in the environment also still works).
+* Automatically disable update checks when running in noninteractive mode.
+* More detailed error reporting if key derivation fails
+
+Compatibility:
+* Compatible with libcurl version >= 7.50.0, and <= 7.21.6 (tested down to 7.19.0)
+* Compatible with Crypto++ 5.6.4
+* Compatible with compilers running under hardening-wrapper
+
+Version 0.9.5
+---------------
+Fixed Bugs:
+* Fixed a bug that prevented mounting a file system on Mac OS X.
+* File system operations correctly update the timestamps (access time, modification time and status change time).
+* Reacts correctly to fsync() and fdatasync() syscalls by flushing the corresponding data to the disk.
+
+Improvements:
+* When mounting an old file system, CryFS will ask before migrating it to the newest version.
+* Operating system tools like the mount command or /proc/self/mountinfo report correct file system type and also report the base directory.
+* Compatibility with GCC 6
+
+Version 0.9.4
+---------------
+Improvements:
+* Ciphertext blocks are split into subdirectories (before, all were on top level) to reduce number of files per directory. Some unix tools don't work well with directories with too many entries.
+
+Fixed Bugs:
+* Renaming a file to an existing file (i.e. overwriting an existing file) didn't free the allocated memory for the overwritten file
+* Renaming a file to an existing file could hurt an invariant in the directory layout (directory entries have to be sorted) and doing so could cause files to seemingly disappear.
+* Fix a potential deadlock in the cache
+
+Compatibility:
+* The generated .deb packages work for any Ubuntu/Debian based distribution, but will not install the package source for automatic updates if it's an unsupported operating system.
+
+Version 0.9.3
+---------------
+New Features:
+* The ciphertext block size is configurable. You can use the "--blocksize" command line argument.
+  If not specified, CryFS will ask you for a block size when creating a file system.
+* It's easier for tools and scripts to use CryFS:
+  If an environment variable CRYFS_FRONTEND=noninteractive is set, we don't ask for options
+  (but take default values for everything that's not specified on command line).
+  Furthermore, in noninteractive mode, we won't ask for password confirmation when creating a file system.
+  The password only has to be sent once to stdin.
+* You can disable the automatic update check by setting CRYFS_NO_UPDATE_CHECK=true in your environment.
+
+Fixed Bugs:
+* Building CryFS from the GitHub tarball (i.e. when there is no .git directory present) works.
+* A bug in the fstat implementation caused problems with some text editors (e.g. nano) falsely thinking a file changed since they opened it.
+* When trying to rename a file to an already existing file name, a bug deleted it instead.
+* Rename operation allows overwriting existing files, as specified in the rename(2) man page.
+
+Compatibility:
+* The generated .deb packages for Debian also work for the Devuan operating system.
+
+Version 0.9.2
+---------------
+* Experimental support for installing CryFS on Mac OS X using homebrew
+  (0.9.2 is not released for Linux)
+
+Version 0.9.1
+---------------
+* Report file system usage statistics to the operating system (e.g. amount of space used). This information can be queried using the 'df' tool on linux. See https://github.com/cryfs/cryfs/commit/68acc27e88ff5209ca55ddb4e91f5a449d77fb54
+* Use stronger scrypt parameters when generating the config file key from the user password. This makes it a bit more secure, but also takes a bit longer to load a file system. See https://github.com/cryfs/cryfs/commit/7f1493ab9210319cab008e71d4ee8f4d7d920f39
+* Fix a bug where deleting a non-empty directory could leave some blocks over. See https://github.com/cryfs/cryfs/commit/df041ac84511e4560c4f099cd8cc089d08e05737
+
+Version 0.9.0
+---------------
+  (warning) file systems created with earlier CryFS versions are incompatible with this release.
+* Fully support file access times
+* Fix: Password is read from stdin, not from glibc getpass(). This enables external tools (e.g. GUIs) to pass in the password without problems.
+* Remove --extpass parameter, because that encourages tool writers to do bad things like storing a password in a file and using --extpass="cat filename".
+  The password can now be passed in to stdin without problems, so tools should use that.
+* Works with zuluMount GUI, https://mhogomchungu.github.io/zuluCrypt/
+* Introduce version flags for file system entities to allow future CryFS versions to be backwards-compatible even if the format changes.
+* (for developers) New git repository layout. All subrepositories have been merged to one directory.
+* (for developers) Using CMake instead of biicode as build system.
+
+Version 0.8.6
+---------------
+* Fix a deadlock that was caused when a very high load of parallel resize operations was issued, see https://github.com/cryfs/cryfs/issues/3
+* Fix a bug that prevented deleting symlinks, see https://github.com/cryfs/cryfs/issues/2
+* Gracefully accept modifications to the file access times instead of failing, although they're not stored yet (they will be stored in 0.9.0). This should fix https://github.com/cryfs/cryfs/issues/4
+
+Version 0.8.5
+---------------
+* Fix package manager warning when installing the .deb package
+* Offer a default configuration when creating new filesystems
+* If the given base or mount directory doesn't exist, offer to create them
+
+Version 0.8.4
+---------------
+* Offering .deb packages for Debian and Ubuntu
+* Compatibility with 32bit systems
+* Support files larger than 4GB
+
+Version 0.8.3
+---------------
+* Ask for password confirmation when creating new filesystem
+* Check for new CryFS versions and ask the user to update if a new version is available
+* Implemented a mechanism that can show warnings about security bugs to users of a certain CryFS version. Let's hope this won't be necessary ;)
+* Compatibility with GCC 4.8 (that allows compiling on Ubuntu 14.04 for example)
+
+Version 0.8.2
+---------------
+* Mount directory, base directory, logfile and config file can be specified as relative paths
+* Improved error messages
+
+Version 0.8.1
+---------------
+* Config File Encryption: Configuration files are encrypted with two ciphers. The user specifies a password, which is then used with the scrypt KDF to generate the two encryption keys.
+  - Inner level: Encrypts the config data using the user specified cipher.
+  - Outer level: Encrypts the name of the inner cipher and the inner level ciphertext using aes-256-gcm.
+  The config file is padded to hide the size of the configuration data (including the name of the cipher used).
+* No external config file needed: If the configuration file is not specified as command line parameter, it will be put into the base directory. This way, the filesystem can be mounted with the password only, without specifying a config file on command line.
+* Logfiles: Added a --logfile option to specify where logs should be written to. If the option is not specified, CryFs logs to syslog.
+* Running in Background: Fixed daemonization. When CryFs is run without "-f" flag, it will run in background.
+* Better error messages when base directory is not existing, not readable or not writeable.
+* Allow --cipher=xxx to specify cipher on command line. If cryfs is creating a new filesystem, it will use this cipher. If it is opening an existing filesystem, it will check whether this is the cipher used by it.
+* --show-ciphers shows a list of all supported ciphers
+* --extpass allows using an external program for password input
+* --unmount-idle x automatically unmounts the filesystem after x minutes without a filesystem operation.

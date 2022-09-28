@@ -1,0 +1,14 @@
+#!/usr/bin/make -f
+
+ARCH := $(shell uname -m)
+
+%:
+	dh $@
+
+override_dh_auto_configure:
+	dh_auto_configure -- -DCMAKE_BUILD_TYPE=Release -DBoost_USE_STATIC_LIBs=off \
+                         -DCRYFS_UPDATE_CHECKS=off -DBUILD_TESTING=False; \
+
+override_dh_auto_build:
+	dh_auto_build
+	cp obj*/src/cryfs-cli/cryfs .
