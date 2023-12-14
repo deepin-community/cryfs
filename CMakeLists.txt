@@ -1,5 +1,7 @@
-cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
-cmake_policy(SET CMP0054 NEW)
+cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
+
+# TODO Remove this deprecated policy switch once we're on cmake 3.4 or later
+cmake_policy(SET CMP0065 OLD)
 
 # TODO Perf test:
 #  - try if setting CRYPTOPP_NATIVE_ARCH=ON and adding -march=native to the compile commands for cryfs source files makes a difference
@@ -10,8 +12,8 @@ project(cryfs)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake-utils)
 include(utils)
 
-require_gcc_version(5.0)
-require_clang_version(4.0)
+require_gcc_version(7.0)
+require_clang_version(7.0)
 
 # Default value is not to build test cases
 option(BUILD_TESTING "build test cases" OFF)
@@ -24,15 +26,7 @@ option(USE_CLANG_TIDY "build with clang-tidy checks enabled" OFF)
 option(USE_IWYU "build with iwyu checks enabled" OFF)
 option(CLANG_TIDY_WARNINGS_AS_ERRORS "treat clang-tidy warnings as errors" OFF)
 
-if(USE_IWYU)
-    # note: for iwyu, we need cmake 3.3
-    cmake_minimum_required(VERSION 3.3 FATAL_ERROR)
-endif()
-if(USE_CLANG_TIDY)
-    # note: for clang-tidy, we need cmake 3.6, or (if the return code should be handled correctly, e.g. on CI), we need 3.8.
-    cmake_minimum_required(VERSION 3.8 FATAL_ERROR)
-endif()
-
+set(DEPENDENCY_CONFIG "cmake-utils/DependenciesFromConan.cmake" CACHE FILEPATH "cmake configuration file defining how to get dependencies")
 
 if (MSVC)
     option(DOKAN_PATH "Location of the Dokan library, e.g. C:\\Program Files\\Dokan\\DokanLibrary-1.1.0" "")
@@ -43,10 +37,14 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE INTERNAL "CMAKE_BUILD_TYPE")
 endif(NOT CMAKE_BUILD_TYPE)
 
+# We don't use LTO because crypto++ has problems with it, see https://github.com/weidai11/cryptopp/issues/1031 and https://www.cryptopp.com/wiki/Link_Time_Optimization
+
 # The MSVC version on AppVeyor CI needs this
 if(MSVC)
   add_definitions(/bigobj)
 endif()
+
+include(${DEPENDENCY_CONFIG})
 
 add_subdirectory(vendor EXCLUDE_FROM_ALL)
 add_subdirectory(src)

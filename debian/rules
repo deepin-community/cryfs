@@ -1,14 +1,28 @@
 #!/usr/bin/make -f
 
-ARCH := $(shell uname -m)
-
 %:
 	dh $@
 
 override_dh_auto_configure:
-	dh_auto_configure -- -DCMAKE_BUILD_TYPE=Release -DBoost_USE_STATIC_LIBs=off \
-                         -DCRYFS_UPDATE_CHECKS=off -DBUILD_TESTING=False; \
+	mkdir -p build
+	dpkg-architecture
+	if `dpkg-architecture -e armel` || `dpkg-architecture -e armhf` || `dpkg-architecture -e s390x`; then \
+	    echo "Performing armel build"; \
+	    (cd build && cmake .. -DDISABLE_ASM=ON -DDEPENDENCY_CONFIG=../cmake-utils/DependenciesFromLocalSystem.cmake -DBUILD_TESTING=ON -DCRYFS_UPDATE_CHECKS=OFF); \
+	else \
+	    (cd build && cmake .. -DDEPENDENCY_CONFIG=../cmake-utils/DependenciesFromLocalSystem.cmake -DBUILD_TESTING=ON -DCRYFS_UPDATE_CHECKS=OFF); \
+	fi
 
 override_dh_auto_build:
-	dh_auto_build
-	cp obj*/src/cryfs-cli/cryfs .
+	(cd build && make VERBOSE=1)
+	./build/test/blobstore/blobstore-test 2>&1
+	./build/test/blockstore/blockstore-test --gtest_filter='-CacheTest_RaceCondition.*' 2>&1
+	# Config Compatibility tests fail on s390x, mipsel, and hppa archs
+	./build/test/cryfs/cryfs-test --gtest_filter='-CryConfigCompatibilityTest.*' 2>&1
+	./build/test/parallelaccessstore/parallelaccessstore-test 2>&1
+	./build/test/gitversion/gitversion-test 2>&1
+	# Test fails with pbuilder, and mipsel
+	# ./build/test/cpp-utils/cpp-utils-test --gtest_filter='-HomedirTest.*' 2>&1
+	# ./build/test/cryfs-cli/cryfs-cli-test
+	# Test requires root (and fuse)
+	# ./build/test/fspp/fspp-test

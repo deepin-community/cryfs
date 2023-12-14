@@ -2,8 +2,11 @@ Source: cryfs
 Maintainer: David Steele <steele@debian.org>
 Section: utils
 Priority: optional
-Build-Depends: debhelper (>= 10),
+Build-Depends: debhelper-compat (= 13),
                cmake,
+               pkg-config,
+               librange-v3-dev,
+               libspdlog-dev,
                libcurl4-openssl-dev,
                libboost-filesystem-dev,
                libboost-system-dev,
@@ -14,7 +17,9 @@ Build-Depends: debhelper (>= 10),
                libssl-dev,
                libfuse-dev,
                python3-all,
-Standards-Version: 4.1.2
+               python3-versioneer,
+Rules-Requires-Root: no
+Standards-Version: 4.6.0.1
 Vcs-Browser: https://github.com/davesteele/cryfs
 Vcs-Git: https://github.com/davesteele/cryfs.git -b debian
 Homepage: https://www.cryfs.org/

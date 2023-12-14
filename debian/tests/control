@@ -13,3 +13,32 @@ Restrictions: isolation-machine
 # permanent transition block.
 Tests: optiontest
 Depends: @
+
+Test-Command: debian/tests/unittest blobstore
+Features: test-name=blobstore
+Depends: @
+
+Test-Command: debian/tests/unittest blockstore
+Features: test-name=blockstore
+Depends: @
+
+# issue with some test environments
+#Test-Command: debian/tests/unittest cpp-utils
+#Features: test-name=cpp-utils
+#Depends: @
+
+Test-Command: debian/tests/unittest cryfs
+Features: test-name=cryfs
+Depends: @
+
+Test-Command: debian/tests/unittest cryfs-cli
+Features: test-name=cryfs-cli
+Depends: @
+
+Test-Command: debian/tests/unittest gitversion
+Features: test-name=gitversion
+Depends: @
+
+Test-Command: debian/tests/unittest parallelaccessstore
+Features: test-name=parallelaccessstore
+Depends: @

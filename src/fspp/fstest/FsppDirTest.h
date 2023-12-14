@@ -24,7 +24,7 @@ public:
 	std::vector<fspp::Dir::Entry> expectedChildren = expected;
 	expectedChildren.push_back(fspp::Dir::Entry(fspp::Dir::EntryType::DIR, "."));
 	expectedChildren.push_back(fspp::Dir::Entry(fspp::Dir::EntryType::DIR, ".."));
-	EXPECT_UNORDERED_EQ(expectedChildren, *dir->children());
+	EXPECT_UNORDERED_EQ(expectedChildren, dir->children());
   }
 
   template<class Entry>
@@ -46,7 +46,7 @@ public:
 	EXPECT_TRUE(false);
   }
 };
-TYPED_TEST_CASE_P(FsppDirTest);
+TYPED_TEST_SUITE_P(FsppDirTest);
 
 inline fspp::Dir::Entry DirEntry(const std::string &name) {
   return fspp::Dir::Entry(fspp::Dir::EntryType::DIR, name);
@@ -267,7 +267,7 @@ TYPED_TEST_P(FsppDirTest, Remove_Nested) {
   EXPECT_EQ(boost::none, this->device->LoadDir("/mytestdir/mydir"));
 }
 
-REGISTER_TYPED_TEST_CASE_P(FsppDirTest,
+REGISTER_TYPED_TEST_SUITE_P(FsppDirTest,
   Children_RootDir_Empty,
   Children_RootDir_OneFile_Directly,
   Children_RootDir_OneFile_AfterReloadingDir,

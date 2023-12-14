@@ -7,7 +7,6 @@
 #include <tuple>
 #include <cstdlib>
 
-using ::testing::_;
 using ::testing::WithParamInterface;
 using ::testing::Values;
 using ::testing::Combine;
@@ -49,7 +48,7 @@ public:
     testFile = std::make_unique<WriteableInMemoryFile>(DataFixture::generate(testData.fileSize().value(), 1));
     ReturnIsFileOnLstatWithSize(FILENAME, testData.fileSize());
     OnOpenReturnFileDescriptor(FILENAME, 0);
-    EXPECT_CALL(*fsimpl, write(0, _, _, _))
+    EXPECT_CALL(*fsimpl, write(0, testing::_, testing::_, testing::_))
       .WillRepeatedly(WriteToFile);
   }
 
@@ -58,7 +57,7 @@ public:
     testFile->write(buf, count, offset);
   });
 };
-INSTANTIATE_TEST_CASE_P(FuseWriteDataTest, FuseWriteDataTest, Combine(
+INSTANTIATE_TEST_SUITE_P(FuseWriteDataTest, FuseWriteDataTest, Combine(
         Values(fspp::num_bytes_t(0), fspp::num_bytes_t(1), fspp::num_bytes_t(10), fspp::num_bytes_t(1000), fspp::num_bytes_t(1024), fspp::num_bytes_t(10*1024*1024)),
         Values(fspp::num_bytes_t(0), fspp::num_bytes_t(1), fspp::num_bytes_t(10), fspp::num_bytes_t(1024), fspp::num_bytes_t(10*1024*1024)),
         Values(fspp::num_bytes_t(0), fspp::num_bytes_t(1), fspp::num_bytes_t(10), fspp::num_bytes_t(1024), fspp::num_bytes_t(10*1024*1024))

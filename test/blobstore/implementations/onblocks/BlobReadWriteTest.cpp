@@ -13,6 +13,8 @@ using blockstore::BlockId;
 using cpputils::Data;
 using cpputils::DataFixture;
 
+namespace {
+
 class BlobReadWriteTest: public BlobStoreTest {
 public:
   static constexpr uint32_t LARGE_SIZE = 10 * 1024 * 1024;
@@ -182,7 +184,7 @@ public:
     EXPECT_DATA_READS_AS_OUTSIDE_OF(ZEROES, blob, start, count);
   }
 };
-INSTANTIATE_TEST_CASE_P(BlobReadWriteDataTest, BlobReadWriteDataTest, Values(
+INSTANTIATE_TEST_SUITE_P(BlobReadWriteDataTest, BlobReadWriteDataTest, Values(
   //Blob with only one leaf
   DataRange{BlobReadWriteDataTest::LAYOUT.maxBytesPerLeaf(),     0,   BlobReadWriteDataTest::LAYOUT.maxBytesPerLeaf()},     // full size leaf, access beginning to end
   DataRange{BlobReadWriteDataTest::LAYOUT.maxBytesPerLeaf(),     100, BlobReadWriteDataTest::LAYOUT.maxBytesPerLeaf()-200}, // full size leaf, access middle to middle
@@ -249,4 +251,6 @@ TEST_P(BlobReadWriteDataTest, WritePartAndReadWhole) {
   EXPECT_EQ(0, std::memcmp(read.data(), this->backgroundData.data(), GetParam().offset));
   EXPECT_EQ(0, std::memcmp(read.dataOffset(GetParam().offset), this->foregroundData.data(), GetParam().count));
   EXPECT_EQ(0, std::memcmp(read.dataOffset(GetParam().offset+GetParam().count), this->backgroundData.dataOffset(GetParam().offset+GetParam().count), GetParam().blobsize-GetParam().count-GetParam().offset));
+}
+
 }

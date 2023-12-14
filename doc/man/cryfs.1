@@ -16,7 +16,6 @@ cryfs \- cryptographic filesystem for the cloud
 [\fB\-f\fR]
 [\fIoptions\fR]
 .I basedir mountpoint
-[\fB\-\-\fR \fIfuse-options\fR]
 .br
 .\" show-ciphers syntax
 .B cryfs \-\-help\fR|\fB\-\-version\fR|\fB\-\-show-ciphers
@@ -80,7 +79,7 @@ help you with creating one, just follow the on-screen instructions.
 .TP
 After you are done working with your encrypted files, unmount your storage \
 with the command
-.B fusermount -u
+.B cryfs-unmount
 .I mountpoint
 .
 .
@@ -181,6 +180,18 @@ By default, CryFS remembers file systems it has seen in this base directory and 
 .
 .
 .TP
+\fB\-\-create-missing-basedir\fI
+.
+Creates the base directory even if there is no directory currently there, skipping the normal confirmation message to create it later.
+.
+.
+.TP
+\fB\-\-create-missing-mountpoint\fI
+.
+Creates the mountpoint even if there is no directory currently there, skipping the normal confirmation message to create it later.
+.
+.
+.TP
 \fB\-\-missing-block-is-integrity-violation\fR=true
 .
 When CryFS encounters a missing ciphertext block, it cannot cannot (yet) know if it was deleted by an unauthorized adversary or by a second authorized client. This is one of the restrictions of the integrity checks currently in place. You can enable this flag to treat missing ciphertext blocks as integrity violations, but then your file system will not be usable by multiple clients anymore. By default, this flag is disabled.
@@ -197,6 +208,28 @@ write them to syslog in background mode, or to stdout in foreground mode.
 \fB\-\-unmount\-idle\fR \fIarg\fR
 .
 Unmount automatically after \fIarg\fR minutes of inactivity.
+.
+.
+.
+.SH FUSE Options
+.
+.TP
+\fB\-o\fR \fIoption\fR, \fB\-\-fuse\-option\fR \fIoption\fR
+.
+Pass through options to the FUSE filesystem driver.
+
+.TP
+For example: 
+.TP
+\fB\-o\fR \fIallow_other\fR
+This option overrides the security measure restricting file
+access to the filesystem owner, so that all users (including
+root) can access the files.
+.TP
+\fB\-o\fR \fIallow_root\fR
+This option is similar to allow_other but file access is
+limited to the filesystem owner and root.  This option and
+allow_other are mutually exclusive.
 .
 .
 .

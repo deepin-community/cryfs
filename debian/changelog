@@ -1,3 +1,112 @@
+cryfs (0.11.4-1) unstable; urgency=medium
+
+  * New upstream version.
+  * Fix gcc-13 compile problem (Closes: #1037612)
+
+ -- David Steele <steele@debian.org>  Thu, 20 Jul 2023 15:27:59 -0400
+
+cryfs (0.11.3-5) unstable; urgency=medium
+
+  * Re-upload with proper distribution.
+
+ -- David Steele <steele@debian.org>  Wed, 28 Dec 2022 09:05:41 -0500
+
+cryfs (0.11.3-4) jammy; urgency=medium
+
+  * Disable asm on s390x build
+
+ -- David Steele <steele@debian.org>  Tue, 27 Dec 2022 16:25:41 -0500
+
+cryfs (0.11.3-3) unstable; urgency=medium
+
+  * Revert NEWS.
+
+ -- David Steele <steele@debian.org>  Thu, 03 Nov 2022 22:23:44 -0400
+
+cryfs (0.11.3-2) unstable; urgency=medium
+
+  * Add NEWS warning.
+
+ -- David Steele <steele@debian.org>  Thu, 03 Nov 2022 22:12:58 -0400
+
+cryfs (0.11.3-1) unstable; urgency=medium
+
+  * New upstream version.
+  * Add cryfs-unmount to package (Closes: #1008845, #1017721).
+
+ -- David Steele <steele@debian.org>  Thu, 03 Nov 2022 17:50:53 -0400
+
+cryfs (0.11.2-5) unstable; urgency=medium
+
+  * Potenial fix for libfmt 9.0 incompatibility (Closes: #1014684).
+
+ -- David Steele <steele@debian.org>  Wed, 27 Jul 2022 21:25:32 -0400
+
+cryfs (0.11.2-4) unstable; urgency=medium
+
+  * DISABLE_ASM for armhf as well
+
+ -- David Steele <steele@debian.org>  Mon, 28 Mar 2022 16:22:31 -0400
+
+cryfs (0.11.2-3) unstable; urgency=medium
+
+  * Address some armhf test failures.
+
+ -- David Steele <steele@debian.org>  Sat, 12 Mar 2022 11:06:54 -0500
+
+cryfs (0.11.2-2) unstable; urgency=medium
+
+  * Harden build testing.
+  * armel and armhg are building (Closes: #1006820).
+  * Build tests passing on all archs (Closes: #1003679).
+
+ -- David Steele <steele@debian.org>  Fri, 11 Mar 2022 13:20:41 -0500
+
+cryfs (0.11.2-1) unstable; urgency=medium
+
+  * Release 0.11.2-1
+  * More changes to support armel build.
+
+ -- David Steele <steele@debian.org>  Tue, 08 Mar 2022 12:31:15 -0500
+
+cryfs (0.11.1-4) unstable; urgency=medium
+
+  * Add upstream patch for cryptopp build vars.
+
+ -- David Steele <steele@debian.org>  Mon, 07 Mar 2022 14:36:33 -0500
+
+cryfs (0.11.1-3) unstable; urgency=medium
+
+  * Escape the make var differently.
+
+ -- David Steele <steele@debian.org>  Tue, 08 Feb 2022 20:37:04 -0500
+
+cryfs (0.11.1-2) unstable; urgency=medium
+
+  * Disable NEON on armel builds
+
+ -- David Steele <steele@debian.org>  Tue, 08 Feb 2022 17:45:58 -0500
+
+cryfs (0.11.1-1) unstable; urgency=medium
+
+  * New upstream version.
+
+ -- David Steele <steele@debian.org>  Tue, 04 Jan 2022 11:44:50 -0500
+
+cryfs (0.11.0-2) unstable; urgency=medium
+
+  * Fix architecture builds.
+
+ -- David Steele <steele@debian.org>  Mon, 03 Jan 2022 16:22:16 -0500
+
+cryfs (0.11.0-1) unstable; urgency=medium
+
+  * New upstream version.
+  * New build system (Closes: #995135)
+  * Add Unit Tests to package, and exercise in autopkgtest.
+
+ -- David Steele <steele@debian.org>  Sun, 02 Jan 2022 11:19:57 -0500
+
 cryfs (0.10.2-5) unstable; urgency=medium
 
   * Add an autopkgtest for terminating options.

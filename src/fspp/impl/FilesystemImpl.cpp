@@ -91,6 +91,10 @@ FilesystemImpl::~FilesystemImpl() {
 #endif
 }
 
+void FilesystemImpl::setContext(Context&& context) {
+    _device->setContext(std::move(context));
+}
+
 unique_ref<File> FilesystemImpl::LoadFile(const bf::path &path) {
   PROFILE(_loadFileNanosec);
   auto file = _device->LoadFile(path);
@@ -290,7 +294,7 @@ void FilesystemImpl::rename(const bf::path &from, const bf::path &to) {
   }
 }
 
-unique_ref<vector<Dir::Entry>> FilesystemImpl::readDir(const bf::path &path) {
+vector<Dir::Entry> FilesystemImpl::readDir(const bf::path &path) {
   PROFILE(_readDirNanosec);
   auto dir = LoadDir(path);
   PROFILE(_readDirNanosec_withoutLoading);
@@ -321,7 +325,7 @@ void FilesystemImpl::statfs(struct ::statvfs *fsstat) {
   fsstat->f_namemax = stat.max_filename_length;
 
   //f_frsize, f_favail, f_fsid and f_flag are ignored in fuse, see http://fuse.sourcearchive.com/documentation/2.7.0/structfuse__operations_4e765e29122e7b6b533dc99849a52655.html#4e765e29122e7b6b533dc99849a52655
-  fsstat->f_frsize = fsstat->f_bsize; // even though this is supposed to be ignored, osxfuse needs it.
+  fsstat->f_frsize = fsstat->f_bsize; // even though this is supposed to be ignored, macFUSE needs it.
 }
 
 void FilesystemImpl::createSymlink(const bf::path &to, const bf::path &from, ::uid_t uid, ::gid_t gid) {

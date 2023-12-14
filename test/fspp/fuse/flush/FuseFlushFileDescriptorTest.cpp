@@ -1,7 +1,5 @@
 #include "testutils/FuseFlushTest.h"
 
-using ::testing::_;
-using ::testing::StrEq;
 using ::testing::Eq;
 using ::testing::WithParamInterface;
 using ::testing::Values;
@@ -22,12 +20,12 @@ using std::string;
 
 class FuseFlushFileDescriptorTest: public FuseFlushTest, public WithParamInterface<int> {
 };
-INSTANTIATE_TEST_CASE_P(FuseFlushFileDescriptorTest, FuseFlushFileDescriptorTest, Values(0, 1, 2, 100, 1024*1024*1024));
+INSTANTIATE_TEST_SUITE_P(FuseFlushFileDescriptorTest, FuseFlushFileDescriptorTest, Values(0, 1, 2, 100, 1024*1024*1024));
 
 TEST_P(FuseFlushFileDescriptorTest, FlushOnCloseFile) {
   ReturnIsFileOnLstat(FILENAME);
 
-  EXPECT_CALL(*fsimpl, openFile(StrEq(FILENAME), _)).WillOnce(Return(GetParam()));
+  EXPECT_CALL(*fsimpl, openFile(Eq(FILENAME), testing::_)).WillOnce(Return(GetParam()));
   EXPECT_CALL(*fsimpl, flush(Eq(GetParam()))).Times(1);
 
   OpenAndCloseFile(FILENAME);

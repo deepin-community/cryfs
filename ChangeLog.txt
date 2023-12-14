@@ -1,3 +1,88 @@
+Version 0.11.4
+---------------
+* Fixed build issue with GCC 13 (see https://github.com/cryfs/cryfs/pull/448 )
+* Fixed build issue with Python 3.12 (see https://github.com/cryfs/cryfs/issues/459 )
+
+Version 0.11.3
+---------------
+* Fixed build issue on systems with libfmt 9.0 (see https://github.com/cryfs/cryfs/issues/432 )
+* Fixed build issue on Apple Silicon Macs (see https://github.com/cryfs/homebrew-tap/issues/10 )
+* Fixed build issue on systems that only have `python3` but no `python` executable (see https://github.com/cryfs/homebrew-tap/issues/12 )
+
+Version 0.11.2
+---------------
+Bugfix:
+* Time to mount a file system was very long because the build didn't correctly use OpenMP. This is now fixed and file systems should open faster again.
+
+Version 0.11.1
+---------------
+Bugfix:
+* Fix building of the range-v3 dependency. The conan remote URL for this dependency changed and we have to use the new URL. See https://github.com/cryfs/cryfs/issues/398
+* Update to CryptoPP 8.6. This fixes a rare bug where CryptoPP 8.5 encrypts data wrongly, see https://github.com/weidai11/cryptopp/issues/1069
+* cryfs-unmount correctly unmounts paths that contain spaces, see https://github.com/cryfs/cryfs/issues/372
+* Updated to DokanY 1.2.2.1001
+
+Version 0.11.0
+---------------
+Backwards Compatibility:
+* Filesystems created with CryFS 0.10.x can be mounted without requiring a migration.
+* Filesystems created with CryFS 0.11.x can be mounted by CryFS 0.10.x if you configure it to use a cipher supported by CryFS 0.10.x, e.g. AES-256-GCM. The new default, XChaCha20-Poly1305, is not supported by CryFS 0.10.x.
+
+Security:
+* Added the XChaCha20-Poly1305 encryption cipher. For new filesystems, this will be the default, but you're still able to create a filesystem with the previous default of AES-256-GCM
+  by saying "no" to the "use default settings?" question when creating the file system. Also, old filesystems will not be automatically converted and will keep using AES-256-GCM.
+  XChaCha20-Poly1305 is significantly slower than AES-256-GCM on modern CPUs, but it is more secure for large filesystems (>64GB).
+  For AES-256-GCM, it is recommended to encrypt at most 2^32 blocks, which at the CryFS default block size of 16KB would be 64GB. The more the filesystem grows above that, the
+  more likely it gets that a nonce gets reused and the two corresponding blocks become decryptable by an adversary. Other blocks would not be affected, but an adversary being
+  able to access those two blocks (i.e. 64KB of the stored data) is bad enough. See Section 8.3 in https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-38d.pdf
+  XChaCha20-Poly1305 does not suffer from this constraint and stays secure even if the filesystem gets very large.
+
+New platforms:
+* CryFS now works on devices with Apple M1 silicon
+
+Build changes:
+* Switch to Conan package manager
+* Allow an easy way to modify how the dependencies are found. This is mostly helpful for package maintainers. See "Using local dependencies" in the README.
+* Build with macFUSE instead of osxfuse on OSX
+* Now requires CMake 3.10 or later, and GCC 7 or later, or Clang 7 or later
+* Fix a build issue on Gentoo systems
+* Fix a build issue when building with boost 1.77
+
+Improvements:
+* Display the file system configuration when mounting a file system
+* Now shows a better error message when failing to load the config file that distinguishes between "wrong password" and "config file not found".
+
+New features:
+* Add support for atime mount options (noatime, strictatime, relatime, atime, nodiratime).
+* The new default is now *noatime* (in 0.10.x is was relatime).
+  Noatime reduces the amount of writes necessary and with that reduces the probability of synchronization conflicts,
+  and the probability of corrupted file systems if a power outage happens while writing.
+* Add an --immediate flag to cryfs-unmount that tries to unmount immediately and doesn't wait for processes to release their locks on the file system.
+* Add a --create-missing-basedir and --create-missing-mountpoint flag to create the base directory and mount directory respectively, if they don't exist, skipping the confirmation prompt.
+
+Other:
+* Updated to spdlog 1.8.5
+* Updated to ranges-v3 0.11.0
+* Updated to boost 1.75
+* Updated to crypto++ 8.5
+
+
+Version 0.10.4
+--------------
+Fixed bugs:
+* Fixed an issue when compiling with GCC 11, see https://github.com/cryfs/cryfs/issues/389
+
+
+Version 0.10.3
+---------------
+Fixed bugs:
+* A comma in the base directory name would make the file system fail to mount, https://github.com/cryfs/cryfs/issues/326
+* Fixed determining the user's homedir: If $HOME and the /etc/passwd entry for the current user contradict each other, now $HOME takes preference over /etc/passwd.
+* Fix Android compilation, https://github.com/cryfs/cryfs/issues/345
+* Remove cryfs-stats tool which isn't ready yet and could destroy the file system
+* Fixed crash on startup when running in an environment that doesn't have $HOME set (e.g. an empty env), https://github.com/cryfs/cryfs/issues/374
+
+
 Version 0.10.2
 ---------------
 Fixed bugs:
@@ -48,6 +133,12 @@ New Features & Improvements:
 Fixed bugs:
 * `du` shows correct file system size on Mac OS X.
 * On Mac OS X, Finder shows the correct name for the mount directory
+
+
+Version 0.9.11
+--------------
+Fixed bugs:
+* Fix a race condition when a file descriptor is closed while there's read/write requests for that file being processed.
 
 
 Version 0.9.10

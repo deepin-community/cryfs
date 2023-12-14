@@ -2,8 +2,8 @@
 #include "utils.h"
 #include <iostream>
 #include <boost/optional.hpp>
-#include <cryfs/config/CryConfigConsole.h>
-#include <cryfs/CryfsException.h>
+#include <cryfs/impl/config/CryConfigConsole.h>
+#include <cryfs/impl/CryfsException.h>
 #include <cryfs-cli/Environment.h>
 
 namespace po = boost::program_options;
@@ -56,11 +56,10 @@ ProgramOptions Parser::parse(const vector<string> &supportedCiphers) const {
         configfile = bf::absolute(vm["config"].as<string>());
     }
     bool foreground = vm.count("foreground");
-    if (foreground) {
-        fuseOptions.push_back(const_cast<char*>("-f"));
-    }
     bool allowFilesystemUpgrade = vm.count("allow-filesystem-upgrade");
     bool allowReplacedFilesystem = vm.count("allow-replaced-filesystem");
+    bool createMissingBasedir = vm.count("create-missing-basedir");
+    bool createMissingMountpoint = vm.count("create-missing-mountpoint");
     optional<double> unmountAfterIdleMinutes = 0.0;  // first setting to 0 and then to none is somehow needed to silence a GCC warning from -Wmaybe-uninitialized
     unmountAfterIdleMinutes = none;
     if (vm.count("unmount-idle")) {
@@ -84,18 +83,16 @@ ProgramOptions Parser::parse(const vector<string> &supportedCiphers) const {
     if (vm.count("missing-block-is-integrity-violation")) {
         missingBlockIsIntegrityViolation = vm["missing-block-is-integrity-violation"].as<bool>();
     }
+
     if (vm.count("fuse-option")) {
         auto options = vm["fuse-option"].as<vector<string>>();
         for (const auto& option: options) {
-            if (option == "noatime" || option == "atime") {
-                LOG(WARN, "CryFS currently doesn't support noatime/atime flags. Using relatime behavior.");
-            }
             fuseOptions.push_back("-o");
             fuseOptions.push_back(option);
         }
     }
 
-    return ProgramOptions(std::move(baseDir), std::move(mountDir), std::move(configfile), foreground, allowFilesystemUpgrade, allowReplacedFilesystem, std::move(unmountAfterIdleMinutes), std::move(logfile), std::move(cipher), blocksizeBytes, allowIntegrityViolations, std::move(missingBlockIsIntegrityViolation), std::move(fuseOptions));
+    return ProgramOptions(std::move(baseDir), std::move(mountDir), std::move(configfile), foreground, allowFilesystemUpgrade, allowReplacedFilesystem, createMissingBasedir, createMissingMountpoint, std::move(unmountAfterIdleMinutes), std::move(logfile), std::move(cipher), blocksizeBytes, allowIntegrityViolations, std::move(missingBlockIsIntegrityViolation), std::move(fuseOptions));
 }
 
 void Parser::_checkValidCipher(const string &cipher, const vector<string> &supportedCiphers) {
@@ -170,6 +167,8 @@ void Parser::_addAllowedOptions(po::options_description *desc) {
             ("allow-integrity-violations", "Disable integrity checks. Integrity checks ensure that your file system was not manipulated or rolled back to an earlier version. Disabling them is needed if you want to load an old snapshot of your file system.")
             ("allow-filesystem-upgrade", "Allow upgrading the file system if it was created with an old CryFS version. After the upgrade, older CryFS versions might not be able to use the file system anymore.")
             ("allow-replaced-filesystem", "By default, CryFS remembers file systems it has seen in this base directory and checks that it didn't get replaced by an attacker with an entirely different file system since the last time it was loaded. However, if you do want to replace the file system with an entirely new one, you can pass in this option to disable the check.")
+            ("create-missing-basedir", "Creates the base directory even if there is no directory currently there, skipping the normal confirmation message to create it later.")
+            ("create-missing-mountpoint", "Creates the mountpoint even if there is no directory currently there, skipping the normal confirmation message to create it later.")
             ("show-ciphers", "Show list of supported ciphers.")
             ("unmount-idle", po::value<double>(), "Automatically unmount after specified number of idle minutes.")
             ("logfile", po::value<string>(), "Specify the file to write log messages to. If this is not specified, log messages will go to stdout, or syslog if CryFS is running in the background.")

@@ -1,4 +1,3 @@
-#include "cpp-utils/crypto/cryptopp_byte.h"
 #include <gtest/gtest.h>
 #include "cpp-utils/crypto/symmetric/Cipher.h"
 #include "cpp-utils/crypto/symmetric/ciphers.h"
@@ -61,7 +60,7 @@ public:
   }
 };
 
-TYPED_TEST_CASE_P(CipherTest);
+TYPED_TEST_SUITE_P(CipherTest);
 
 constexpr std::array<unsigned int, 7> SIZES = {{0, 1, 100, 1024, 5000, 1048576, 20971520}};
 
@@ -124,7 +123,7 @@ TYPED_TEST_P(CipherTest, TryDecryptDataThatIsMuchTooSmall_1) {
   this->ExpectDoesntDecrypt(tooSmallCiphertext);
 }
 
-REGISTER_TYPED_TEST_CASE_P(CipherTest,
+REGISTER_TYPED_TEST_SUITE_P(CipherTest,
     Size,
     EncryptThenDecrypt_Zeroes,
     EncryptThenDecrypt_Data,
@@ -145,7 +144,7 @@ public:
   Data plaintext2 = CipherTest<Cipher>::CreateData(100 * 1024);
 };
 
-TYPED_TEST_CASE_P(AuthenticatedCipherTest);
+TYPED_TEST_SUITE_P(AuthenticatedCipherTest);
 
 TYPED_TEST_P(AuthenticatedCipherTest, ModifyFirstByte_Zeroes_Size1) {
   Data ciphertext = this->Encrypt(this->zeroes1);
@@ -211,7 +210,7 @@ TYPED_TEST_P(AuthenticatedCipherTest, TryDecryptRandomData) {
   this->ExpectDoesntDecrypt(this->plaintext2);
 }
 
-REGISTER_TYPED_TEST_CASE_P(AuthenticatedCipherTest,
+REGISTER_TYPED_TEST_SUITE_P(AuthenticatedCipherTest,
   ModifyFirstByte_Zeroes_Size1,
   ModifyFirstByte_Zeroes,
   ModifyFirstByte_Data_Size1,
@@ -225,49 +224,52 @@ REGISTER_TYPED_TEST_CASE_P(AuthenticatedCipherTest,
 );
 
 
-INSTANTIATE_TYPED_TEST_CASE_P(Fake, CipherTest, FakeAuthenticatedCipher);
-INSTANTIATE_TYPED_TEST_CASE_P(Fake, AuthenticatedCipherTest, FakeAuthenticatedCipher);
+INSTANTIATE_TYPED_TEST_SUITE_P(Fake, CipherTest, FakeAuthenticatedCipher);
+INSTANTIATE_TYPED_TEST_SUITE_P(Fake, AuthenticatedCipherTest, FakeAuthenticatedCipher);
 
-INSTANTIATE_TYPED_TEST_CASE_P(AES256_CFB, CipherTest, AES256_CFB); //CFB mode is not authenticated
-INSTANTIATE_TYPED_TEST_CASE_P(AES256_GCM, CipherTest, AES256_GCM);
-INSTANTIATE_TYPED_TEST_CASE_P(AES256_GCM, AuthenticatedCipherTest, AES256_GCM);
-INSTANTIATE_TYPED_TEST_CASE_P(AES128_CFB, CipherTest, AES128_CFB); //CFB mode is not authenticated
-INSTANTIATE_TYPED_TEST_CASE_P(AES128_GCM, CipherTest, AES128_GCM);
-INSTANTIATE_TYPED_TEST_CASE_P(AES128_GCM, AuthenticatedCipherTest, AES128_GCM);
+INSTANTIATE_TYPED_TEST_SUITE_P(XChaCha20Poly1305, CipherTest, XChaCha20Poly1305);
+INSTANTIATE_TYPED_TEST_SUITE_P(XChaCha20Poly1305, AuthenticatedCipherTest, XChaCha20Poly1305);
 
-INSTANTIATE_TYPED_TEST_CASE_P(Twofish256_CFB, CipherTest, Twofish256_CFB); //CFB mode is not authenticated
-INSTANTIATE_TYPED_TEST_CASE_P(Twofish256_GCM, CipherTest, Twofish256_GCM);
-INSTANTIATE_TYPED_TEST_CASE_P(Twofish256_GCM, AuthenticatedCipherTest, Twofish256_GCM);
-INSTANTIATE_TYPED_TEST_CASE_P(Twofish128_CFB, CipherTest, Twofish128_CFB); //CFB mode is not authenticated
-INSTANTIATE_TYPED_TEST_CASE_P(Twofish128_GCM, CipherTest, Twofish128_GCM);
-INSTANTIATE_TYPED_TEST_CASE_P(Twofish128_GCM, AuthenticatedCipherTest, Twofish128_GCM);
+INSTANTIATE_TYPED_TEST_SUITE_P(AES256_CFB, CipherTest, AES256_CFB); //CFB mode is not authenticated
+INSTANTIATE_TYPED_TEST_SUITE_P(AES256_GCM, CipherTest, AES256_GCM);
+INSTANTIATE_TYPED_TEST_SUITE_P(AES256_GCM, AuthenticatedCipherTest, AES256_GCM);
+INSTANTIATE_TYPED_TEST_SUITE_P(AES128_CFB, CipherTest, AES128_CFB); //CFB mode is not authenticated
+INSTANTIATE_TYPED_TEST_SUITE_P(AES128_GCM, CipherTest, AES128_GCM);
+INSTANTIATE_TYPED_TEST_SUITE_P(AES128_GCM, AuthenticatedCipherTest, AES128_GCM);
 
-INSTANTIATE_TYPED_TEST_CASE_P(Serpent256_CFB, CipherTest, Serpent256_CFB); //CFB mode is not authenticated
-INSTANTIATE_TYPED_TEST_CASE_P(Serpent256_GCM, CipherTest, Serpent256_GCM);
-INSTANTIATE_TYPED_TEST_CASE_P(Serpent256_GCM, AuthenticatedCipherTest, Serpent256_GCM);
-INSTANTIATE_TYPED_TEST_CASE_P(Serpent128_CFB, CipherTest, Serpent128_CFB); //CFB mode is not authenticated
-INSTANTIATE_TYPED_TEST_CASE_P(Serpent128_GCM, CipherTest, Serpent128_GCM);
-INSTANTIATE_TYPED_TEST_CASE_P(Serpent128_GCM, AuthenticatedCipherTest, Serpent128_GCM);
+INSTANTIATE_TYPED_TEST_SUITE_P(Twofish256_CFB, CipherTest, Twofish256_CFB); //CFB mode is not authenticated
+INSTANTIATE_TYPED_TEST_SUITE_P(Twofish256_GCM, CipherTest, Twofish256_GCM);
+INSTANTIATE_TYPED_TEST_SUITE_P(Twofish256_GCM, AuthenticatedCipherTest, Twofish256_GCM);
+INSTANTIATE_TYPED_TEST_SUITE_P(Twofish128_CFB, CipherTest, Twofish128_CFB); //CFB mode is not authenticated
+INSTANTIATE_TYPED_TEST_SUITE_P(Twofish128_GCM, CipherTest, Twofish128_GCM);
+INSTANTIATE_TYPED_TEST_SUITE_P(Twofish128_GCM, AuthenticatedCipherTest, Twofish128_GCM);
 
-INSTANTIATE_TYPED_TEST_CASE_P(Cast256_CFB, CipherTest, Cast256_CFB); //CFB mode is not authenticated
-INSTANTIATE_TYPED_TEST_CASE_P(Cast256_GCM, CipherTest, Cast256_GCM);
-INSTANTIATE_TYPED_TEST_CASE_P(Cast256_GCM, AuthenticatedCipherTest, Cast256_GCM);
+INSTANTIATE_TYPED_TEST_SUITE_P(Serpent256_CFB, CipherTest, Serpent256_CFB); //CFB mode is not authenticated
+INSTANTIATE_TYPED_TEST_SUITE_P(Serpent256_GCM, CipherTest, Serpent256_GCM);
+INSTANTIATE_TYPED_TEST_SUITE_P(Serpent256_GCM, AuthenticatedCipherTest, Serpent256_GCM);
+INSTANTIATE_TYPED_TEST_SUITE_P(Serpent128_CFB, CipherTest, Serpent128_CFB); //CFB mode is not authenticated
+INSTANTIATE_TYPED_TEST_SUITE_P(Serpent128_GCM, CipherTest, Serpent128_GCM);
+INSTANTIATE_TYPED_TEST_SUITE_P(Serpent128_GCM, AuthenticatedCipherTest, Serpent128_GCM);
 
-#if CRYPTOPP_VERSION != 564
-INSTANTIATE_TYPED_TEST_CASE_P(Mars448_CFB, CipherTest, Mars448_CFB); //CFB mode is not authenticated
-INSTANTIATE_TYPED_TEST_CASE_P(Mars448_GCM, CipherTest, Mars448_GCM);
-INSTANTIATE_TYPED_TEST_CASE_P(Mars448_GCM, AuthenticatedCipherTest, Mars448_GCM);
-#endif
-INSTANTIATE_TYPED_TEST_CASE_P(Mars256_CFB, CipherTest, Mars256_CFB); //CFB mode is not authenticated
-INSTANTIATE_TYPED_TEST_CASE_P(Mars256_GCM, CipherTest, Mars256_GCM);
-INSTANTIATE_TYPED_TEST_CASE_P(Mars256_GCM, AuthenticatedCipherTest, Mars256_GCM);
-INSTANTIATE_TYPED_TEST_CASE_P(Mars128_CFB, CipherTest, Mars128_CFB); //CFB mode is not authenticated
-INSTANTIATE_TYPED_TEST_CASE_P(Mars128_GCM, CipherTest, Mars128_GCM);
-INSTANTIATE_TYPED_TEST_CASE_P(Mars128_GCM, AuthenticatedCipherTest, Mars128_GCM);
+INSTANTIATE_TYPED_TEST_SUITE_P(Cast256_CFB, CipherTest, Cast256_CFB); //CFB mode is not authenticated
+INSTANTIATE_TYPED_TEST_SUITE_P(Cast256_GCM, CipherTest, Cast256_GCM);
+INSTANTIATE_TYPED_TEST_SUITE_P(Cast256_GCM, AuthenticatedCipherTest, Cast256_GCM);
+
+INSTANTIATE_TYPED_TEST_SUITE_P(Mars448_CFB, CipherTest, Mars448_CFB); //CFB mode is not authenticated
+INSTANTIATE_TYPED_TEST_SUITE_P(Mars448_GCM, CipherTest, Mars448_GCM);
+INSTANTIATE_TYPED_TEST_SUITE_P(Mars448_GCM, AuthenticatedCipherTest, Mars448_GCM);
+INSTANTIATE_TYPED_TEST_SUITE_P(Mars256_CFB, CipherTest, Mars256_CFB); //CFB mode is not authenticated
+INSTANTIATE_TYPED_TEST_SUITE_P(Mars256_GCM, CipherTest, Mars256_GCM);
+INSTANTIATE_TYPED_TEST_SUITE_P(Mars256_GCM, AuthenticatedCipherTest, Mars256_GCM);
+INSTANTIATE_TYPED_TEST_SUITE_P(Mars128_CFB, CipherTest, Mars128_CFB); //CFB mode is not authenticated
+INSTANTIATE_TYPED_TEST_SUITE_P(Mars128_GCM, CipherTest, Mars128_GCM);
+INSTANTIATE_TYPED_TEST_SUITE_P(Mars128_GCM, AuthenticatedCipherTest, Mars128_GCM);
 
 
 // Test cipher names
 TEST(CipherNameTest, TestCipherNames) {
+  EXPECT_EQ("xchacha20-poly1305", string(XChaCha20Poly1305::NAME));
+  
   EXPECT_EQ("aes-256-gcm", string(AES256_GCM::NAME));
   EXPECT_EQ("aes-256-cfb", string(AES256_CFB::NAME));
   EXPECT_EQ("aes-128-gcm", string(AES128_GCM::NAME));
@@ -286,10 +288,9 @@ TEST(CipherNameTest, TestCipherNames) {
   EXPECT_EQ("cast-256-gcm", string(Cast256_GCM::NAME));
   EXPECT_EQ("cast-256-cfb", string(Cast256_CFB::NAME));
 
-#if CRYPTOPP_VERSION != 564
+
   EXPECT_EQ("mars-448-gcm", string(Mars448_GCM::NAME));
   EXPECT_EQ("mars-448-cfb", string(Mars448_CFB::NAME));
-#endif
   EXPECT_EQ("mars-256-gcm", string(Mars256_GCM::NAME));
   EXPECT_EQ("mars-256-cfb", string(Mars256_CFB::NAME));
   EXPECT_EQ("mars-128-gcm", string(Mars128_GCM::NAME));

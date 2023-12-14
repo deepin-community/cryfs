@@ -17,10 +17,10 @@
 #include <cpp-utils/process/subprocess.h>
 #include <cpp-utils/network/FakeHttpClient.h>
 #include <cpp-utils/lock/ConditionBarrier.h>
-#include "../../cryfs/testutils/MockConsole.h"
-#include "../../cryfs/testutils/TestWithFakeHomeDirectory.h"
+#include "../../cryfs/impl/testutils/MockConsole.h"
+#include "../../cryfs/impl/testutils/TestWithFakeHomeDirectory.h"
 #include <fspp/fuse/Fuse.h>
-#include <cryfs/ErrorCodes.h>
+#include <cryfs/impl/ErrorCodes.h>
 #include <cpp-utils/testutils/CaptureStderrRAII.h>
 #include <regex>
 #include <string>
@@ -75,12 +75,21 @@ public:
         //TODO Make this work when run in background
         ASSERT(std::find(args.begin(), args.end(), string("-f")) != args.end(), "Currently only works if run in foreground");
 
-        FilesystemOutput filesystem_output = run_filesystem(args, mountDir, std::move(onMounted));
+        bool successfully_mounted = false;
+
+        FilesystemOutput filesystem_output = run_filesystem(args, mountDir, [&] {
+            successfully_mounted = true;
+            onMounted();
+        });
 
         EXPECT_EQ(0, filesystem_output.exit_code);
         if (!std::regex_search(filesystem_output.stdout_, std::regex("Mounting filesystem"))) {
-          std::cerr << filesystem_output.stdout_ << std::endl;
-          EXPECT_TRUE(false);
+          std::cerr << "STDOUT:\n" << filesystem_output.stdout_ << "STDERR:\n" << filesystem_output.stderr_ << std::endl;
+          EXPECT_TRUE(false) << "Filesystem did not output the 'Mounting filesystem' message, probably wasn't successfully mounted.";
+        }
+
+        if (!successfully_mounted) {
+            EXPECT_TRUE(false) << "Filesystem did not call onMounted callback, probably wasn't successfully mounted.";
         }
     }
 

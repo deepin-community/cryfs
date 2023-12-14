@@ -2,7 +2,6 @@
 #include <blobstore/implementations/onblocks/datatreestore/impl/LeafTraverser.h>
 #include <gmock/gmock.h>
 
-using ::testing::_;
 using ::testing::Invoke;
 using ::testing::Eq;
 
@@ -20,8 +19,8 @@ using std::make_shared;
 
 class TraversorMock {
 public:
-  MOCK_METHOD3(calledExistingLeaf, void(DataLeafNode*, bool, uint32_t));
-  MOCK_METHOD1(calledCreateLeaf, shared_ptr<Data>(uint32_t));
+  MOCK_METHOD(void, calledExistingLeaf, (DataLeafNode*, bool, uint32_t));
+  MOCK_METHOD(shared_ptr<Data>, calledCreateLeaf, (uint32_t));
 };
 
 MATCHER_P(KeyEq, expected, "node blockId equals") {
@@ -68,8 +67,8 @@ public:
   }
 
   void EXPECT_DONT_TRAVERSE_ANY_LEAVES() {
-    EXPECT_CALL(traversor, calledExistingLeaf(_, _, _)).Times(0);
-    EXPECT_CALL(traversor, calledCreateLeaf(_)).Times(0);
+    EXPECT_CALL(traversor, calledExistingLeaf(testing::_, testing::_, testing::_)).Times(0);
+    EXPECT_CALL(traversor, calledCreateLeaf(testing::_)).Times(0);
   }
 
   void TraverseLeaves(unique_ref<DataNode> root, uint32_t beginIndex, uint32_t endIndex, bool expectReadOnly) {

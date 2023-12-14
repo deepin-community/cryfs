@@ -3,7 +3,6 @@
 #define MESSMER_BLOCKSTORE_IMPLEMENTATIONS_ENCRYPTED_ENCRYPTEDBLOCKSTORE2_H_
 
 #include "../../interface/BlockStore2.h"
-#include "cpp-utils/crypto/cryptopp_byte.h"
 #include <cpp-utils/macros.h>
 #include <cpp-utils/crypto/symmetric/Cipher.h>
 #include <cpp-utils/data/SerializationHelper.h>
@@ -30,7 +29,7 @@ public:
   void forEachBlock(std::function<void (const BlockId &)> callback) const override;
 
   //This function should only be used by test cases
-  void __setKey(const typename Cipher::EncryptionKey &encKey);
+  void _setKey(const typename Cipher::EncryptionKey &encKey);
 
 private:
 
@@ -189,7 +188,7 @@ uint16_t EncryptedBlockStore2<Cipher>::_readFormatHeader(const cpputils::Data &d
 }
 
 template<class Cipher>
-void EncryptedBlockStore2<Cipher>::__setKey(const typename Cipher::EncryptionKey &encKey) {
+void EncryptedBlockStore2<Cipher>::_setKey(const typename Cipher::EncryptionKey &encKey) {
   _encKey = encKey;
 }
 

@@ -1,4 +1,5 @@
-version=3
+version=4
 
-opts=pgpsigurlmangle=s/(.*)/$1.asc/ \
-https://github.com/cryfs/cryfs/releases .*/download/([\.0-9]+)/cryfs-[\.0-9]+\.tar\.gz
+opts=pgpsigurlmangle=s/(.*)/$1.asc/,\
+downloadurlmangle=s/archive\/refs\/tags\/(.*)\.tar\.gz/releases\/download\/$1\/@PACKAGE@-$1\.tar\.gz/ \
+https://github.com/cryfs/@PACKAGE@/tags /cryfs/@PACKAGE@/archive/refs/tags/(.*)\.tar\.gz

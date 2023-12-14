@@ -26,20 +26,21 @@
 // THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Author: marcus.boerger@google.com (Marcus Boerger)
+
 
 // Google Mock - a framework for writing C++ mock classes.
 //
-// This file implements some matchers that depend on gmock-generated-matchers.h.
+// This file implements some matchers that depend on gmock-matchers.h.
 //
 // Note that tests are implemented in gmock-matchers_test.cc rather than
 // gmock-more-matchers-test.cc.
 
-#ifndef GMOCK_GMOCK_MORE_MATCHERS_H_
-#define GMOCK_GMOCK_MORE_MATCHERS_H_
+// GOOGLETEST_CM0002 DO NOT DELETE
 
-#include "gmock/gmock-generated-matchers.h"
+#ifndef GOOGLEMOCK_INCLUDE_GMOCK_GMOCK_MORE_MATCHERS_H_
+#define GOOGLEMOCK_INCLUDE_GMOCK_GMOCK_MORE_MATCHERS_H_
+
+#include "gmock/gmock-matchers.h"
 
 namespace testing {
 
@@ -88,4 +89,4 @@ MATCHER(IsFalse, negation ? "is true" : "is false") {
 
 }  // namespace testing
 
-#endif  // GMOCK_GMOCK_MORE_MATCHERS_H_
+#endif  // GOOGLEMOCK_INCLUDE_GMOCK_GMOCK_MORE_MATCHERS_H_

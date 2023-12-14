@@ -136,9 +136,9 @@ public:
     void Test_Overwrite_DoesntHaveSameEntryTwice() {
         auto node = this->CreateNode("/oldname");
         this->CreateNode("/newname");
-        EXPECT_EQ(4u, this->LoadDir("/")->children()->size()); // 4, because of '.' and '..'
+        EXPECT_EQ(4u, this->LoadDir("/")->children().size()); // 4, because of '.' and '..'
         node->rename("/newname");
-        EXPECT_EQ(3u, this->LoadDir("/")->children()->size()); // 3, because of '.' and '..'
+        EXPECT_EQ(3u, this->LoadDir("/")->children().size()); // 3, because of '.' and '..'
     }
 
     void Test_Overwrite_Error_DirWithFile_InSameDir() {
@@ -210,7 +210,7 @@ public:
     }
 };
 
-REGISTER_NODE_TEST_CASE(FsppNodeTest_Rename,
+REGISTER_NODE_TEST_SUITE(FsppNodeTest_Rename,
     Error_TargetParentDirDoesntExist,
     Error_TargetParentDirIsFile,
     Error_RootDir,
