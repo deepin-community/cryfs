@@ -10,22 +10,22 @@
 #include <fspp/impl/FilesystemImpl.h>
 #include <cpp-utils/process/subprocess.h>
 #include <cpp-utils/io/DontEchoStdinToStdoutRAII.h>
-#include <cryfs/filesystem/CryDevice.h>
-#include <cryfs/config/CryConfigLoader.h>
-#include <cryfs/config/CryPasswordBasedKeyProvider.h>
+#include <cryfs/impl/filesystem/CryDevice.h>
+#include <cryfs/impl/config/CryConfigLoader.h>
+#include <cryfs/impl/config/CryPasswordBasedKeyProvider.h>
 #include "program_options/Parser.h"
 #include <boost/filesystem.hpp>
 
-#include <cryfs/filesystem/CryDir.h>
+#include <cryfs/impl/filesystem/CryDir.h>
 #include <gitversion/gitversion.h>
 
 #include "VersionChecker.h"
 #include <gitversion/VersionCompare.h>
 #include <cpp-utils/io/NoninteractiveConsole.h>
-#include <cryfs/localstate/LocalStateDir.h>
-#include <cryfs/localstate/BasedirMetadata.h>
+#include <cryfs/impl/localstate/LocalStateDir.h>
+#include <cryfs/impl/localstate/BasedirMetadata.h>
 #include "Environment.h"
-#include <cryfs/CryfsException.h>
+#include <cryfs/impl/CryfsException.h>
 #include <cpp-utils/thread/debugging.h>
 
 //TODO Many functions accessing the ProgramOptions object. Factor out into class that stores it as a member.
@@ -45,6 +45,7 @@ using cpputils::TempFile;
 using cpputils::RandomGenerator;
 using cpputils::unique_ref;
 using cpputils::SCrypt;
+using cpputils::either;
 using cpputils::SCryptSettings;
 using cpputils::Console;
 using cpputils::HttpClient;
@@ -101,6 +102,7 @@ namespace cryfs_cli {
         }
 #else
 # warning Update checks are disabled. The resulting executable will not go online to check for newer versions or known security vulnerabilities.
+        UNUSED(httpClient);
 #endif
         cout << endl;
     }
@@ -202,14 +204,19 @@ namespace cryfs_cli {
     CryConfigLoader::ConfigLoadResult Cli::_loadOrCreateConfig(const ProgramOptions &options, const LocalStateDir& localStateDir) {
         auto configFile = _determineConfigFile(options);
         auto config = _loadOrCreateConfigFile(std::move(configFile), localStateDir, options.cipher(), options.blocksizeBytes(), options.allowFilesystemUpgrade(), options.missingBlockIsIntegrityViolation(), options.allowReplacedFilesystem());
-        if (config == none) {
-          throw CryfsException("Could not load config file. Did you enter the correct password?", ErrorCode::WrongPassword);
+        if (config.is_left()) {
+            switch(config.left()) {
+                case CryConfigFile::LoadError::DecryptionFailed:
+                    throw CryfsException("Failed to decrypt the config file. Did you enter the correct password?", ErrorCode::WrongPassword);
+                case CryConfigFile::LoadError::ConfigFileNotFound:
+                    throw CryfsException("Could not find the cryfs.config file. Are you sure this is a valid CryFS file system?", ErrorCode::InvalidFilesystem);
+            }
         }
-        _checkConfigIntegrity(options.baseDir(), localStateDir, config->configFile, options.allowReplacedFilesystem());
-        return std::move(*config);
+        _checkConfigIntegrity(options.baseDir(), localStateDir, *config.right().configFile, options.allowReplacedFilesystem());
+        return std::move(config.right());
     }
 
-    optional<CryConfigLoader::ConfigLoadResult> Cli::_loadOrCreateConfigFile(bf::path configFilePath, LocalStateDir localStateDir, const optional<string> &cipher, const optional<uint32_t> &blocksizeBytes, bool allowFilesystemUpgrade, const optional<bool> &missingBlockIsIntegrityViolation, bool allowReplacedFilesystem) {
+    either<CryConfigFile::LoadError, CryConfigLoader::ConfigLoadResult> Cli::_loadOrCreateConfigFile(bf::path configFilePath, LocalStateDir localStateDir, const optional<string> &cipher, const optional<uint32_t> &blocksizeBytes, bool allowFilesystemUpgrade, const optional<bool> &missingBlockIsIntegrityViolation, bool allowReplacedFilesystem) {
         // TODO Instead of passing in _askPasswordXXX functions to KeyProvider, only pass in console and move logic to the key provider,
         //      for example by having a separate CryPasswordBasedKeyProvider / CryNoninteractivePasswordBasedKeyProvider.
         auto keyProvider = make_unique_ref<CryPasswordBasedKeyProvider>(
@@ -222,11 +229,39 @@ namespace cryfs_cli {
                                cipher, blocksizeBytes, missingBlockIsIntegrityViolation).loadOrCreate(std::move(configFilePath), allowFilesystemUpgrade, allowReplacedFilesystem);
     }
 
+    namespace {
+        void printConfig(const CryConfig& oldConfig, const CryConfig& updatedConfig) {
+            auto printValue = [&] (const char* prefix, const char* suffix, auto member) {
+                std::cout << prefix;
+                auto oldConfigValue = member(oldConfig);
+                auto updatedConfigValue = member(updatedConfig);
+                if (oldConfigValue == updatedConfigValue) {
+                    std::cout << oldConfigValue;
+                } else {
+                    std::cout << oldConfigValue << " -> " << updatedConfigValue;
+                }
+                std::cout << suffix;
+            };
+            std::cout
+                << "\n----------------------------------------------------"
+                << "\nFilesystem configuration:"
+                << "\n----------------------------------------------------";
+            printValue("\n- Filesystem format version: ", "", [] (const CryConfig& config) {return config.Version(); });
+            printValue("\n- Created with: CryFS ", "", [] (const CryConfig& config) { return config.CreatedWithVersion(); });
+            printValue("\n- Last opened with: CryFS ", "", [] (const CryConfig& config) { return config.LastOpenedWithVersion(); });
+            printValue("\n- Cipher: ", "", [] (const CryConfig& config) { return config.Cipher(); });
+            printValue("\n- Blocksize: ", " bytes", [] (const CryConfig& config) { return config.BlocksizeBytes(); });
+            printValue("\n- Filesystem Id: ", "", [] (const CryConfig& config) { return config.FilesystemId().ToString(); });
+            std::cout << "\n----------------------------------------------------\n";
+        }
+    }
+
     void Cli::_runFilesystem(const ProgramOptions &options, std::function<void()> onMounted) {
         try {
             LocalStateDir localStateDir(Environment::localStateDir());
             auto blockStore = make_unique_ref<OnDiskBlockStore2>(options.baseDir());
             auto config = _loadOrCreateConfig(options, localStateDir);
+            printConfig(config.oldConfig, *config.configFile->config());
             unique_ptr<fspp::fuse::Fuse> fuse = nullptr;
             bool stoppedBecauseOfIntegrityViolation = false;
 
@@ -243,9 +278,8 @@ namespace cryfs_cli {
                 throw CryfsException("Integrity violation detected. Unmounting.", ErrorCode::IntegrityViolation);
               }
             };
-            const bool missingBlockIsIntegrityViolation = config.configFile.config()->missingBlockIsIntegrityViolation();
-            _device = optional<unique_ref<CryDevice>>(make_unique_ref<CryDevice>(std::move(config.configFile), std::move(blockStore), std::move(localStateDir), config.myClientId,
-                                                                                 options.allowIntegrityViolations(), missingBlockIsIntegrityViolation, std::move(onIntegrityViolation)));
+            const bool missingBlockIsIntegrityViolation = config.configFile->config()->missingBlockIsIntegrityViolation();
+            _device = optional<unique_ref<CryDevice>>(make_unique_ref<CryDevice>(std::move(config.configFile), std::move(blockStore), std::move(localStateDir), config.myClientId, options.allowIntegrityViolations(), missingBlockIsIntegrityViolation, std::move(onIntegrityViolation)));
             _sanityCheckFilesystem(_device->get());
 
             auto initFilesystem = [&] (fspp::fuse::Fuse *fs){
@@ -268,13 +302,18 @@ namespace cryfs_cli {
 
             _initLogfile(options);
 
-          std::cout << "\nMounting filesystem. To unmount, call:\n$ cryfs-unmount " << options.mountDir() << "\n"
-                    << std::endl;
-          fuse->run(options.mountDir(), options.fuseOptions());
+            std::cout << "\nMounting filesystem. To unmount, call:\n$ cryfs-unmount " << options.mountDir() << "\n"
+                      << std::endl;
 
-          if (stoppedBecauseOfIntegrityViolation) {
+            if (options.foreground()) {
+                fuse->runInForeground(options.mountDir(), options.fuseOptions());
+            } else {
+                fuse->runInBackground(options.mountDir(), options.fuseOptions());
+            }
+
+            if (stoppedBecauseOfIntegrityViolation) {
               throw CryfsException("Integrity violation detected. Unmounting.", ErrorCode::IntegrityViolation);
-          }
+            }
         } catch (const CryfsException &e) {
             throw; // CryfsException is only thrown if setup goes wrong. Throw it through so that we get the correct process exit code.
         } catch (const std::exception &e) {
@@ -310,7 +349,7 @@ namespace cryfs_cli {
         //TODO Test that --logfile parameter works. Should be: file if specified, otherwise stderr if foreground, else syslog.
         if (options.logFile() != none) {
             cpputils::logging::setLogger(
-                spdlog::create<spdlog::sinks::simple_file_sink<std::mutex>>("cryfs", options.logFile()->string()));
+                spdlog::create<spdlog::sinks::basic_file_sink_mt>("cryfs", options.logFile()->string()));
         } else if (options.foreground()) {
             cpputils::logging::setLogger(spdlog::stderr_logger_mt("cryfs"));
         } else {
@@ -319,10 +358,10 @@ namespace cryfs_cli {
     }
 
 	void Cli::_sanityChecks(const ProgramOptions &options) {
-		_checkDirAccessible(bf::absolute(options.baseDir()), "base directory", ErrorCode::InaccessibleBaseDir);
+		_checkDirAccessible(bf::absolute(options.baseDir()), "base directory", options.createMissingBasedir(), ErrorCode::InaccessibleBaseDir);
 
 		if (!options.mountDirIsDriveLetter()) {
-			_checkDirAccessible(options.mountDir(), "mount directory", ErrorCode::InaccessibleMountDir);
+			_checkDirAccessible(options.mountDir(), "mount directory", options.createMissingMountpoint(), ErrorCode::InaccessibleMountDir);
 			_checkMountdirDoesntContainBasedir(options);
 		} else {
 			if (bf::exists(options.mountDir())) {
@@ -331,9 +370,14 @@ namespace cryfs_cli {
 		}
     }
 
-    void Cli::_checkDirAccessible(const bf::path &dir, const std::string &name, ErrorCode errorCode) {
+    void Cli::_checkDirAccessible(const bf::path &dir, const std::string &name, bool createMissingDir, ErrorCode errorCode) {
         if (!bf::exists(dir)) {
-            bool create = _console->askYesNo("Could not find " + name + ". Do you want to create it?", false);
+            bool create = createMissingDir;
+            if (create) {
+                LOG(INFO, "Automatically creating {}", name);
+            } else {
+                create = _console->askYesNo("Could not find " + name + ". Do you want to create it?", false);
+            }
             if (create) {
                 if (!bf::create_directory(dir)) {
                     throw CryfsException("Error creating "+name, errorCode);

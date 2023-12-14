@@ -11,7 +11,7 @@ add_library(${PROJECT_NAME} STATIC ${SOURCES})
 target_compile_definitions(${PROJECT_NAME} PUBLIC _FILE_OFFSET_BITS=64)
 target_link_libraries(${PROJECT_NAME} PUBLIC cpp-utils fspp-interface)
 
-target_add_boost(${PROJECT_NAME} filesystem system thread chrono)
+target_add_boost(${PROJECT_NAME})
 target_enable_style_warnings(${PROJECT_NAME})
 target_activate_cpp14(${PROJECT_NAME})
 
@@ -35,12 +35,12 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     DESTINATION "${CMAKE_INSTALL_BINDIR}"
   )
 
-elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  set(CMAKE_FIND_FRAMEWORK LAST)
-  find_library_with_path(FUSE "osxfuse" FUSE_LIB_PATH)
-  target_link_libraries(${PROJECT_NAME} PUBLIC ${FUSE})
-else() # Linux
-  find_library_with_path(FUSE "fuse" FUSE_LIB_PATH)
-  target_link_libraries(${PROJECT_NAME} PUBLIC ${FUSE})
+else() # Linux and macOS
+  find_package(PkgConfig REQUIRED)
+  pkg_check_modules(Fuse REQUIRED IMPORTED_TARGET fuse)
+  target_link_libraries(${PROJECT_NAME} PUBLIC PkgConfig::Fuse)
 endif()
 
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  set(CMAKE_FIND_FRAMEWORK LAST)
+endif()

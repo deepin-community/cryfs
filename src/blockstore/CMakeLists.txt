@@ -11,6 +11,7 @@ set(SOURCES
   implementations/parallelaccess/ParallelAccessBlockStore.cpp
   implementations/parallelaccess/BlockRef.cpp
   implementations/parallelaccess/ParallelAccessBlockStoreAdapter.cpp
+  implementations/readonly/ReadOnlyBlockStore2.cpp
   implementations/compressing/CompressingBlockStore.cpp
   implementations/compressing/CompressedBlock.cpp
   implementations/compressing/compressors/RunLengthEncoding.cpp
@@ -35,6 +36,6 @@ add_library(${PROJECT_NAME} STATIC ${SOURCES})
 
 target_link_libraries(${PROJECT_NAME} PUBLIC cpp-utils)
 
-target_add_boost(${PROJECT_NAME} filesystem system thread)
+target_add_boost(${PROJECT_NAME})
 target_enable_style_warnings(${PROJECT_NAME})
 target_activate_cpp14(${PROJECT_NAME})

@@ -1,1 +1,10 @@
-cryfs /usr/bin
+build/src/cryfs-cli/cryfs /usr/bin
+build/src/cryfs-unmount/cryfs-unmount /usr/bin
+build/test/blobstore/blobstore-test /usr/lib/cryfs
+build/test/blockstore/blockstore-test /usr/lib/cryfs
+build/test/cpp-utils/cpp-utils-test /usr/lib/cryfs
+build/test/cryfs-cli/cryfs-cli-test /usr/lib/cryfs
+build/test/cryfs/cryfs-test /usr/lib/cryfs
+build/test/fspp/fspp-test /usr/lib/cryfs
+build/test/gitversion/gitversion-test /usr/lib/cryfs
+build/test/parallelaccessstore/parallelaccessstore-test /usr/lib/cryfs

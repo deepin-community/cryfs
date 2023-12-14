@@ -1,0 +1,30 @@
+Description: Support environmental variables in cryptopp cmake
+ Support a fix for armel builds of cryptopp by allowing build environment
+ variables to make a difference.
+ .
+ https://github.com/cryfs/cryfs/issues/408#issuecomment-1060776282
+Author: Igor Kostenko
+Bug: https://github.com/cryfs/cryfs/issues/408
+
+--- a/vendor/cryptopp/vendor_cryptopp/CMakeLists.txt
++++ b/vendor/cryptopp/vendor_cryptopp/CMakeLists.txt
+@@ -1007,6 +1007,19 @@
+ endif ()
+ 
+ #============================================================================
++# Compiler flags
++#============================================================================
++
++# add_compile_definitions added in CMake 3.12
++if (${CMAKE_VERSION} VERSION_LESS "3.12")
++  # https://stackoverflow.com/q/61250087
++  add_definitions(${CMAKE_CPP_FLAGS} ${CRYPTOPP_COMPILE_DEFINITIONS} ${CRYPTOPP_COMPILE_OPTIONS})
++else()
++  add_compile_definitions(${CRYPTOPP_COMPILE_DEFINITIONS})
++  add_compile_options(${CMAKE_CPP_FLAGS} ${CRYPTOPP_COMPILE_OPTIONS})
++endif()
++
++#============================================================================
+ # Compile targets
+ #============================================================================
+ 

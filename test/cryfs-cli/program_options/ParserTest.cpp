@@ -1,9 +1,9 @@
 #include "testutils/ProgramOptionsTestBase.h"
 #include <cryfs-cli/program_options/Parser.h>
-#include <cryfs/config/CryCipher.h>
+#include <cryfs/impl/config/CryCipher.h>
 #include <cpp-utils/pointer/unique_ref_boost_optional_gtest_workaround.h>
 #include <gitversion/gitversion.h>
-#include <cryfs/CryfsException.h>
+#include <cryfs/impl/CryfsException.h>
 #include <cpp-utils/testutils/CaptureStderrRAII.h>
 
 using namespace cryfs;
@@ -127,6 +127,26 @@ TEST_F(ProgramOptionsParserTest, AllowFilesystemUpgrade_False) {
 TEST_F(ProgramOptionsParserTest, AllowFilesystemUpgrade_True) {
     ProgramOptions options = parse({"./myExecutable", "--allow-filesystem-upgrade", basedir, "mountdir"});
     EXPECT_TRUE(options.allowFilesystemUpgrade());
+}
+
+TEST_F(ProgramOptionsParserTest, CreateMissingBasedir_False) {
+    ProgramOptions options = parse({"./myExecutable", basedir, "mountdir"});
+    EXPECT_FALSE(options.createMissingBasedir());
+}
+
+TEST_F(ProgramOptionsParserTest, CreateMissingBasedir_True) {
+    ProgramOptions options = parse({"./myExecutable", "--create-missing-basedir",  basedir, "mountdir"});
+    EXPECT_TRUE(options.createMissingBasedir());
+}
+
+TEST_F(ProgramOptionsParserTest, CreateMissingMountpoint_False) {
+    ProgramOptions options = parse({"./myExecutable", basedir, "mountdir"});
+    EXPECT_FALSE(options.createMissingMountpoint());
+}
+
+TEST_F(ProgramOptionsParserTest, CreateMissingMountpoint_True) {
+    ProgramOptions options = parse({"./myExecutable", "--create-missing-mountpoint",  basedir, "mountdir"});
+    EXPECT_TRUE(options.createMissingMountpoint());
 }
 
 TEST_F(ProgramOptionsParserTest, LogfileGiven) {

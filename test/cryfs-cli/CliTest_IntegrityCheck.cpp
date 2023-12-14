@@ -1,11 +1,11 @@
 #include "testutils/CliTest.h"
-#include <cryfs/config/CryConfigFile.h>
-#include <cryfs/ErrorCodes.h>
+#include <cryfs/impl/config/CryConfigFile.h>
+#include <cryfs/impl/ErrorCodes.h>
 #include <cpp-utils/crypto/kdf/Scrypt.h>
 #include <cpp-utils/data/DataFixture.h>
 #include <cpp-utils/tempfile/TempDir.h>
 #include <blockstore/implementations/caching/CachingBlockStore2.h>
-#include <cryfs/filesystem/cachingfsblobstore/CachingFsBlobStore.h>
+#include <cryfs/impl/filesystem/cachingfsblobstore/CachingFsBlobStore.h>
 
 using std::vector;
 using std::string;
@@ -34,6 +34,7 @@ bool readingFileIsSuccessful(const bf::path& filename) {
   return file.good();
 }
 
+// NOLINTNEXTLINE(misc-no-recursion)
 void recursive_copy(const bf::path &src, const bf::path &dst) {
   if (bf::exists(dst)) {
     throw std::runtime_error(dst.generic_string() + " already exists");
@@ -69,16 +70,16 @@ class CliTest_IntegrityCheck : public CliTest {
 public:
   void modifyFilesystemId() {
     FakeCryKeyProvider keyProvider;
-    auto configFile = CryConfigFile::load(basedir / "cryfs.config", &keyProvider).value();
-    configFile.config()->SetFilesystemId(CryConfig::FilesystemID::FromString("0123456789ABCDEF0123456789ABCDEF"));
-    configFile.save();
+    auto configFile = CryConfigFile::load(basedir / "cryfs.config", &keyProvider, CryConfigFile::Access::ReadWrite).right_opt().value();
+    configFile->config()->SetFilesystemId(CryConfig::FilesystemID::FromString("0123456789ABCDEF0123456789ABCDEF"));
+    configFile->save();
   }
 
   void modifyFilesystemKey() {
     FakeCryKeyProvider keyProvider;
-    auto configFile = CryConfigFile::load(basedir / "cryfs.config", &keyProvider).value();
-    configFile.config()->SetEncryptionKey("0123456789ABCDEF0123456789ABCDEF");
-    configFile.save();
+    auto configFile = CryConfigFile::load(basedir / "cryfs.config", &keyProvider, CryConfigFile::Access::ReadWrite).right_opt().value();
+    configFile->config()->SetEncryptionKey("0123456789ABCDEF0123456789ABCDEF");
+    configFile->save();
   }
 };
 

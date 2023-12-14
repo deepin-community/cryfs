@@ -1,7 +1,6 @@
 #include "testutils/FuseOpenTest.h"
 
-using ::testing::_;
-using ::testing::StrEq;
+using ::testing::Eq;
 using ::testing::WithParamInterface;
 using ::testing::Values;
 using ::testing::Return;
@@ -25,18 +24,18 @@ private:
     return fd;
   }
   void ReadFile(int fd) {
-    uint8_t buf;
+    uint8_t buf = 0;
     int retval = ::read(fd, &buf, 1);
     EXPECT_EQ(1, retval) << "Reading file failed";
   }
 };
-INSTANTIATE_TEST_CASE_P(FuseOpenFileDescriptorTest, FuseOpenFileDescriptorTest, Values(0, 2, 5, 1000, 1024*1024*1024));
+INSTANTIATE_TEST_SUITE_P(FuseOpenFileDescriptorTest, FuseOpenFileDescriptorTest, Values(0, 2, 5, 1000, 1024*1024*1024));
 
 TEST_P(FuseOpenFileDescriptorTest, TestReturnedFileDescriptor) {
   ReturnIsFileOnLstatWithSize(FILENAME, fspp::num_bytes_t(1));
-  EXPECT_CALL(*fsimpl, openFile(StrEq(FILENAME), _))
+  EXPECT_CALL(*fsimpl, openFile(Eq(FILENAME), testing::_))
     .Times(1).WillOnce(Return(GetParam()));
-  EXPECT_CALL(*fsimpl, read(GetParam(), _, _, _)).Times(1).WillOnce(Return(fspp::num_bytes_t(1)));
+  EXPECT_CALL(*fsimpl, read(GetParam(), testing::_, testing::_, testing::_)).Times(1).WillOnce(Return(fspp::num_bytes_t(1)));
 
   OpenAndReadFile(FILENAME);
 }

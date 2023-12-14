@@ -13,6 +13,8 @@ using cpputils::value_type::OrderedIdValueType;
 using cpputils::value_type::QuantityValueType;
 using cpputils::value_type::FlagsValueType;
 
+// TODO Test that noexcept flags are set correctly
+
 namespace {
 
 struct MyIdValueType : IdValueType<MyIdValueType, int64_t> {
@@ -86,7 +88,7 @@ namespace IdValueTypeTest_constexpr_test_extras {
 template<class Type> class IdValueTypeTest : public testing::Test {
 };
 using IdValueTypeTest_types = testing::Types<MyIdValueType, MyOrderedIdValueType, MyQuantityValueType, MyFlagsValueType>;
-TYPED_TEST_CASE(IdValueTypeTest, IdValueTypeTest_types);
+TYPED_TEST_SUITE(IdValueTypeTest, IdValueTypeTest_types);
 
 
 TYPED_TEST(IdValueTypeTest, Equality) {
@@ -205,7 +207,7 @@ namespace OrderedIdValueTypeTest_constexpr_test_extras {
 
 template<class Type> class OrderedIdValueTypeTest : public testing::Test {};
 using OrderedIdValueTypeTest_types = testing::Types<MyOrderedIdValueType, MyQuantityValueType>;
-TYPED_TEST_CASE(OrderedIdValueTypeTest, OrderedIdValueTypeTest_types);
+TYPED_TEST_SUITE(OrderedIdValueTypeTest, OrderedIdValueTypeTest_types);
 
 TYPED_TEST(OrderedIdValueTypeTest, LessThan) {
     TypeParam a(3);
@@ -308,7 +310,7 @@ namespace QuantityValueTypeTest_constexpr_test {
 
 template<class Type> class QuantityValueTypeTest : public testing::Test {};
 using QuantityValueTypeTest_types = testing::Types<MyQuantityValueType>;
-TYPED_TEST_CASE(QuantityValueTypeTest, QuantityValueTypeTest_types);
+TYPED_TEST_SUITE(QuantityValueTypeTest, QuantityValueTypeTest_types);
 
 TYPED_TEST(QuantityValueTypeTest, PreIncrement) {
     TypeParam a(3);
@@ -435,7 +437,7 @@ namespace FlagsValueTypeTest_constexpr_test {
 
 template<class Type> class FlagsValueTypeTest : public testing::Test {};
 using FlagsValueType_types = testing::Types<MyFlagsValueType>;
-TYPED_TEST_CASE(FlagsValueTypeTest, FlagsValueType_types);
+TYPED_TEST_SUITE(FlagsValueTypeTest, FlagsValueType_types);
 
 TYPED_TEST(FlagsValueTypeTest, Invert) {
     TypeParam a(3);

@@ -1,0 +1,13 @@
+#!/bin/sh
+
+set -e
+
+LOGDIR="${AUTOPKGTEST_ARTIFACTS:-/tmp}"
+TEST="$1"
+LOGPATH="${LOGDIR}/${TEST}.log"
+
+/usr/lib/cryfs/$TEST-test --gtest_filter=-HomedirTest.HomedirExist:SubprocessTest.*:BacktraceTest.*:CliTest_Setup.*:CliTest_IntegrityCheck.*:*CliTest_WrongEnvironment*:*WorksWithCommas*:CliTest_Unmount.*:CacheTest_RaceCondition.* 2>&1  | tee ${LOGPATH}
+
+if grep -q FAIL ${LOGPATH}; then
+    exit -1
+fi

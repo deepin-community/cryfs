@@ -1,54 +1,11 @@
 image:
-- Visual Studio 2017
-#- Visual Studio 2017 Preview
+- Visual Studio 2019
 
 platform:
 - x64
-- x86
-#- Any CPU
 
 configuration:
- - Debug
- - RelWithDebInfo
  - Release
 
-version: '{branch}-{build}'
-
-init:
-- echo %NUMBER_OF_PROCESSORS%
-- echo %PLATFORM%
-- echo %APPVEYOR_BUILD_WORKER_IMAGE%
-- set arch=32
-- if "%PLATFORM%"=="x64" ( set arch=64)
-- set VisualStudioVersion=2017
-- if "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2017 Preview" ( set VisualStudioVersion=Preview)
-- cmd: call "C:\Program Files (x86)\Microsoft Visual Studio\%VisualStudioVersion%\Community\VC\Auxiliary\Build\vcvars%arch%.bat"
-
-install:
-  - choco install -y dokany --version 1.2.1.2000 --installargs INSTALLDEVFILES=1
-  - cmake --version
-
 build_script:
-  - cmd: mkdir build
-  - cmd: cd build
-  # note: The cmake+ninja workflow requires us to set build type in both cmake commands ('cmake' and 'cmake --build'), otherwise the cryfs.exe will depend on debug versions of the visual studio c++ runtime (i.e. msvcp140d.dll)
-  - cmd: cmake .. -G "Ninja" -DCMAKE_BUILD_TYPE=%CONFIGURATION% -DBUILD_TESTING=on -DBOOST_ROOT="C:/Libraries/boost_1_67_0" -DDOKAN_PATH="C:/Program Files/Dokan/DokanLibrary-1.2.1"
-  - cmd: cmake --build . --config %CONFIGURATION%
-  - cmd: .\test\gitversion\gitversion-test.exe
-  # cpp-utils-test disables ThreadDebuggingTest_ThreadName.*_thenIsCorrect because the appveyor image is too old to support the API needed for that
-  - cmd: .\test\cpp-utils\cpp-utils-test.exe --gtest_filter=-ThreadDebuggingTest_ThreadName.*_thenIsCorrect
-  #- cmd: .\test\fspp\fspp-test.exe
-  - cmd: .\test\parallelaccessstore\parallelaccessstore-test.exe
-  - cmd: .\test\blockstore\blockstore-test.exe
-  - cmd: .\test\blobstore\blobstore-test.exe
-  - cmd: .\test\cryfs\cryfs-test.exe
-  #- cmd: .\test\cryfs-cli\cryfs-cli-test.exe
-
-  - cmd: cpack -C %CONFIGURATION% --verbose -G WIX
-
-on_failure:
-  - cmd: type C:\projects\cryfs\build\_CPack_Packages\win64\WIX\wix.log
-
-artifacts:
- - path: build/cryfs-*.msi
-   name: CryFS
+  - cmd: echo Appveyor CI is disabled since we now have Github Actions

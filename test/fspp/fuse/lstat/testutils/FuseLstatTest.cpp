@@ -1,8 +1,7 @@
 #include "FuseLstatTest.h"
 
 using std::function;
-using ::testing::StrEq;
-using ::testing::_;
+using ::testing::Eq;
 using ::testing::Invoke;
 
 void FuseLstatTest::LstatPath(const std::string &path) {
@@ -41,7 +40,7 @@ fspp::fuse::STAT FuseLstatTest::CallDirLstatWithImpl(function<void(fspp::fuse::S
 }
 
 fspp::fuse::STAT FuseLstatTest::CallLstatWithImpl(function<void(fspp::fuse::STAT*)> implementation) {
-  EXPECT_CALL(*fsimpl, lstat(StrEq(FILENAME), _)).WillRepeatedly(Invoke([implementation](const char*, fspp::fuse::STAT *stat) {
+  EXPECT_CALL(*fsimpl, lstat(Eq(FILENAME), testing::_)).WillRepeatedly(Invoke([implementation](const boost::filesystem::path&, fspp::fuse::STAT *stat) {
     implementation(stat);
   }));
 

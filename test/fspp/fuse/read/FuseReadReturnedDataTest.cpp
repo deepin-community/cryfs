@@ -9,7 +9,6 @@
 #include <tuple>
 #include <cstdlib>
 
-using ::testing::_;
 using ::testing::WithParamInterface;
 using ::testing::Values;
 using ::testing::Combine;
@@ -52,7 +51,7 @@ public:
     testFile = std::make_unique<InMemoryFile>(DataFixture::generate(testData.fileSize().value()));
     ReturnIsFileOnLstatWithSize(FILENAME, testData.fileSize());
     OnOpenReturnFileDescriptor(FILENAME, 0);
-    EXPECT_CALL(*fsimpl, read(0, _, _, _))
+    EXPECT_CALL(*fsimpl, read(0, testing::_, testing::_, testing::_))
       .WillRepeatedly(ReadFromFile);
   }
 
@@ -61,7 +60,7 @@ public:
     return testFile->read(buf, count, offset);
   });
 };
-INSTANTIATE_TEST_CASE_P(FuseReadReturnedDataTest, FuseReadReturnedDataTest, Combine(
+INSTANTIATE_TEST_SUITE_P(FuseReadReturnedDataTest, FuseReadReturnedDataTest, Combine(
         Values(fspp::num_bytes_t(0), fspp::num_bytes_t(1), fspp::num_bytes_t(10), fspp::num_bytes_t(1000), fspp::num_bytes_t(1024), fspp::num_bytes_t(10*1024*1024)),
         Values(fspp::num_bytes_t(0), fspp::num_bytes_t(1), fspp::num_bytes_t(10), fspp::num_bytes_t(1024), fspp::num_bytes_t(10*1024*1024)),
         Values(fspp::num_bytes_t(0), fspp::num_bytes_t(1), fspp::num_bytes_t(10), fspp::num_bytes_t(1024), fspp::num_bytes_t(10*1024*1024))
