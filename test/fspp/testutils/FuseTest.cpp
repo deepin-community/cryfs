@@ -54,8 +54,6 @@ FuseTest::FuseTest(): fsimpl(make_shared<MockFilesystem>()), _context(boost::non
   }));
 
   ReturnIsDirOnLstat("/");
-  ReturnDoesntExistOnLstat("/.Trash");
-  ReturnDoesntExistOnLstat("/.Trash-1000");
 }
 
 unique_ref<FuseTest::TempTestFS> FuseTest::TestFS(const std::vector<std::string>& fuseOptions) {
