@@ -1,3 +1,9 @@
+cryfs (0.11.4-1deepin1) unstable; urgency=medium
+
+  * Fix python3.12 build error.
+
+ -- xiangzelong <xiangzelong@deepin.org>  Wed, 07 Aug 2024 17:58:24 +0800
+
 cryfs (0.11.4-1) unstable; urgency=medium
 
   * New upstream version.
