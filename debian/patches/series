@@ -2,3 +2,4 @@
 004-cryptopp-armel-cmake.patch
 0001-fix-py3.12-build-error.patch
 #005-gcc-13.patch
+006-sm4-cipher.patch

@@ -1,0 +1,207 @@
+diff --git a/src/cpp-utils/CMakeLists.txt b/src/cpp-utils/CMakeLists.txt
+index dbe2519..adefab7 100644
+--- a/src/cpp-utils/CMakeLists.txt
++++ b/src/cpp-utils/CMakeLists.txt
+@@ -99,3 +99,11 @@ if(MSVC)
+     # Required by range-v3, see its README.md
+     target_compile_options(${PROJECT_NAME} PUBLIC /experimental:preprocessor /permissive- /Zc:twoPhase-)
+ endif()
++
++find_package(PkgConfig REQUIRED)
++pkg_check_modules(CRYPTO libcrypto)
++if (CRYPTO_FOUND)
++    include_directories(${CRYPTO_INCLUDE_DIRS})
++    link_directories(${CRYPTO_LIBRARY_DIRS})
++    target_link_libraries(${PROJECT_NAME} PUBLIC ${CRYPTO_LIBRARIES})
++endif()
+diff --git a/src/cpp-utils/crypto/symmetric/SM4_Cipher.h b/src/cpp-utils/crypto/symmetric/SM4_Cipher.h
+new file mode 100644
+index 0000000..3ac2fb6
+--- /dev/null
++++ b/src/cpp-utils/crypto/symmetric/SM4_Cipher.h
+@@ -0,0 +1,128 @@
++#pragma once
++#ifndef MESSMER_CPPUTILS_CRYPTO_SYMMETRIC_SM4_Cipher_H_
++#define MESSMER_CPPUTILS_CRYPTO_SYMMETRIC_SM4_Cipher_H_
++
++#include "../../data/FixedSizeData.h"
++#include "../../random/Random.h"
++#include "../../assert/assert.h"
++#include "EncryptionKey.h"
++
++#include <openssl/evp.h>
++
++namespace cpputils {
++
++enum class ModeType : uint8_t {
++    ECB = 0x00,
++    CBC = 0x01,
++    CFB = 0x02,
++    OFB = 0x03,
++    CTR = 0x04
++};
++
++template<ModeType Type, unsigned int KeySize>
++class SM4_Cipher
++{
++public:
++    using EncryptionKey = cpputils::EncryptionKey;
++
++    static constexpr unsigned int KEYSIZE = KeySize;
++    static constexpr unsigned int STRING_KEYSIZE = 2 * KEYSIZE;
++
++    static constexpr unsigned int ciphertextSize(unsigned int plaintextBlockSize)
++    {
++        return plaintextBlockSize + IV_SIZE;
++    }
++
++    static constexpr unsigned int plaintextSize(unsigned int ciphertextBlockSize)
++    {
++        return ciphertextBlockSize - IV_SIZE;
++    }
++
++    static Data encrypt(const CryptoPP::byte *plaintext, unsigned int plaintextSize, const EncryptionKey &encKey);
++    static boost::optional<Data> decrypt(const CryptoPP::byte *ciphertext, unsigned int ciphertextSize, const EncryptionKey &encKey);
++
++private:
++    static const EVP_CIPHER *sm4_get_mode()
++    {
++        switch (Type) {
++        case ModeType::ECB:
++            return EVP_sm4_ecb();
++        case ModeType::CBC:
++            return EVP_sm4_cbc();
++        case ModeType::CFB:
++            return EVP_sm4_cfb128();
++        case ModeType::OFB:
++            return EVP_sm4_ofb();
++        default:
++            return EVP_sm4_ctr();
++        }
++    }
++    static constexpr unsigned int IV_SIZE = 16;   // SM4 block size is always 128 bits (16 bytes)
++};
++
++template<ModeType Type, unsigned int KeySize>
++constexpr unsigned int SM4_Cipher<Type, KeySize>::KEYSIZE;
++template<ModeType Type, unsigned int KeySize>
++constexpr unsigned int SM4_Cipher<Type, KeySize>::STRING_KEYSIZE;
++
++template<ModeType Type, unsigned int KeySize>
++Data SM4_Cipher<Type, KeySize>::encrypt(const CryptoPP::byte *plaintext, unsigned int plaintextSize, const EncryptionKey &encKey)
++{
++    ASSERT(encKey.binaryLength() == KeySize, "Wrong key size");
++
++    FixedSizeData<IV_SIZE> iv = Random::PseudoRandom().getFixedSize<IV_SIZE>();
++    Data ciphertext(ciphertextSize(plaintextSize));
++    iv.ToBinary(ciphertext.data());
++
++    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
++    if (ctx == nullptr) {
++        throw std::runtime_error("Failed to create EVP_CIPHER_CTX");
++    }
++
++    EVP_CipherInit_ex(ctx, sm4_get_mode(), NULL,
++                      static_cast<const unsigned char *>(encKey.data()),
++                      iv.data(), 1);
++
++    if (plaintextSize > 0) {
++        EVP_Cipher(ctx, static_cast<unsigned char *>(ciphertext.data()) + IV_SIZE,
++                   plaintext, plaintextSize);
++    }
++
++    EVP_CIPHER_CTX_free(ctx);
++    return ciphertext;
++}
++
++template<ModeType Type, unsigned int KeySize>
++boost::optional<Data> SM4_Cipher<Type, KeySize>::decrypt(const CryptoPP::byte *ciphertext, unsigned int ciphertextSize, const EncryptionKey &encKey)
++{
++    ASSERT(encKey.binaryLength() == KeySize, "Wrong key size");
++
++    if (ciphertextSize < IV_SIZE) {
++        return boost::none;
++    }
++
++    const CryptoPP::byte *ciphertextIV = ciphertext;
++    const CryptoPP::byte *ciphertextData = ciphertext + IV_SIZE;
++    Data plaintext(plaintextSize(ciphertextSize));
++
++    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
++    if (ctx == nullptr) {
++        return boost::none;
++    }
++
++    EVP_CipherInit_ex(ctx, sm4_get_mode(), NULL,
++                      static_cast<const unsigned char *>(encKey.data()),
++                      ciphertextIV, 0);
++
++    if (plaintext.size() > 0) {
++        EVP_Cipher(ctx, static_cast<unsigned char *>(plaintext.data()),
++                   ciphertextData, plaintext.size());
++    }
++
++    EVP_CIPHER_CTX_free(ctx);
++    return plaintext;
++}
++
++}
++
++#endif
+diff --git a/src/cpp-utils/crypto/symmetric/ciphers.cpp b/src/cpp-utils/crypto/symmetric/ciphers.cpp
+index cec6448..49b5c4f 100644
+--- a/src/cpp-utils/crypto/symmetric/ciphers.cpp
++++ b/src/cpp-utils/crypto/symmetric/ciphers.cpp
+@@ -32,4 +32,10 @@ namespace cpputils {
+     DEFINE_CIPHER(Mars128_GCM);
+     DEFINE_CIPHER(Mars128_CFB);
+ 
++    // sm4 ciphers
++    DEFINE_CIPHER(SM4128_ECB);
++    DEFINE_CIPHER(SM4128_CBC);
++    DEFINE_CIPHER(SM4128_CFB);
++    DEFINE_CIPHER(SM4128_OFB);
++    DEFINE_CIPHER(SM4128_CTR);
+ }
+diff --git a/src/cpp-utils/crypto/symmetric/ciphers.h b/src/cpp-utils/crypto/symmetric/ciphers.h
+index 0bae686..22243fe 100644
+--- a/src/cpp-utils/crypto/symmetric/ciphers.h
++++ b/src/cpp-utils/crypto/symmetric/ciphers.h
+@@ -10,6 +10,7 @@
+ #include <vendor_cryptopp/chachapoly.h>
+ #include "GCM_Cipher.h"
+ #include "CFB_Cipher.h"
++#include "SM4_Cipher.h"
+ 
+ namespace cpputils {
+ 
+@@ -55,6 +56,11 @@ DECLARE_CIPHER(Mars256_CFB, "mars-256-cfb", SINGLE_ARG(CFB_Cipher<CryptoPP::MARS
+ DECLARE_CIPHER(Mars128_GCM, "mars-128-gcm", SINGLE_ARG(GCM_Cipher<CryptoPP::MARS, 16>));
+ DECLARE_CIPHER(Mars128_CFB, "mars-128-cfb", SINGLE_ARG(CFB_Cipher<CryptoPP::MARS, 16>));
+ 
++DECLARE_CIPHER(SM4128_ECB, "sm4-128-ecb", SINGLE_ARG(SM4_Cipher<ModeType::ECB, 16>));
++DECLARE_CIPHER(SM4128_CBC, "sm4-128-cbc", SINGLE_ARG(SM4_Cipher<ModeType::CBC, 16>));
++DECLARE_CIPHER(SM4128_CFB, "sm4-128-cfb", SINGLE_ARG(SM4_Cipher<ModeType::CFB, 16>));
++DECLARE_CIPHER(SM4128_OFB, "sm4-128-ofb", SINGLE_ARG(SM4_Cipher<ModeType::OFB, 16>));
++DECLARE_CIPHER(SM4128_CTR, "sm4-128-ctr", SINGLE_ARG(SM4_Cipher<ModeType::CTR, 16>));
+ }
+ 
+ #undef DECLARE_CIPHER
+diff --git a/src/cryfs/impl/config/CryCipher.cpp b/src/cryfs/impl/config/CryCipher.cpp
+index 6f5ec90..1ad7b26 100644
+--- a/src/cryfs/impl/config/CryCipher.cpp
++++ b/src/cryfs/impl/config/CryCipher.cpp
+@@ -79,7 +79,12 @@ const vector<shared_ptr<CryCipher>> CryCiphers::SUPPORTED_CIPHERS = {
+         make_shared<CryCipherInstance<Mars256_GCM>>(),
+         make_shared<CryCipherInstance<Mars256_CFB>>(INTEGRITY_WARNING),
+         make_shared<CryCipherInstance<Mars128_GCM>>(),
+-        make_shared<CryCipherInstance<Mars128_CFB>>(INTEGRITY_WARNING)
++        make_shared<CryCipherInstance<Mars128_CFB>>(INTEGRITY_WARNING),
++        make_shared<CryCipherInstance<SM4128_ECB>>(),
++        make_shared<CryCipherInstance<SM4128_CBC>>(),
++        make_shared<CryCipherInstance<SM4128_CFB>>(),
++        make_shared<CryCipherInstance<SM4128_OFB>>(),
++        make_shared<CryCipherInstance<SM4128_CTR>>()
+ };
+ 
+ const CryCipher& CryCiphers::find(const string &cipherName) {
