@@ -1,3 +1,9 @@
+cryfs (0.11.4-1deepin4) unstable; urgency=medium
+
+  * fix: Fix build fail on mips
+
+ -- wangrong <wangrong@uniontech.com>  Thu, 05 Feb 2026 17:20:51 +0800
+
 cryfs (0.11.4-1deepin3) unstable; urgency=medium
 
   * chore: improve debian build rules with architecture detection

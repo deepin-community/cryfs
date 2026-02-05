@@ -44,3 +44,10 @@ endif
 	# ./build/test/cryfs-cli/cryfs-cli-test
 	# Test requires root (and fuse)
 	# ./build/test/fspp/fspp-test
+
+override_dh_auto_install:
+ifeq ($(SKIP_TESTS),yes)
+	@echo "Removing test executables from debian/cryfs.install";
+	sed -i '/^build\/test\//d' debian/cryfs.install;
+endif
+	dh_install
