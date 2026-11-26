@@ -42,7 +42,7 @@ public:
         return make_unique_ref<EncryptedBlockStore2<Cipher>>(std::move(baseBlockStore), Cipher::EncryptionKey::FromString(encKey));
     }
 
-    string createKey(cpputils::RandomGenerator &randomGenerator) const override {
+    string createKey(cpputils::RandomGenerator *randomGenerator) const override {
         return Cipher::EncryptionKey::CreateKey(randomGenerator, Cipher::KEYSIZE).ToString();
     }
 
@@ -100,6 +100,6 @@ vector<string> CryCiphers::_buildSupportedCipherNames() {
 }
 
 const vector<string>& CryCiphers::supportedCipherNames() {
-	static vector<string> supportedCipherNames = _buildSupportedCipherNames();
+	static const vector<string> supportedCipherNames = _buildSupportedCipherNames();
 	return supportedCipherNames;
 }

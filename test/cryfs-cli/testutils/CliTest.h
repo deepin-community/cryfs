@@ -50,11 +50,18 @@ public:
         for (const std::string& arg : args) {
             _args.emplace_back(arg.c_str());
         }
-        auto &keyGenerator = cpputils::Random::PseudoRandom();
+        auto *keyGenerator = cpputils::Random::PseudoRandom();
         ON_CALL(*console, askPassword(testing::StrEq("Password: "))).WillByDefault(testing::Return("pass"));
         ON_CALL(*console, askPassword(testing::StrEq("Confirm Password: "))).WillByDefault(testing::Return("pass"));
         // Run Cryfs
-        return cryfs_cli::Cli(keyGenerator, cpputils::SCrypt::TestSettings, console).main(_args.size(), _args.data(), _httpClient(), std::move(onMounted));
+        return cryfs_cli::Cli(keyGenerator, cpputils::SCrypt::TestSettings, console).main(
+            _args.size(),
+            _args.data(),
+            #ifdef CRYFS_UPDATE_CHECKS
+            _httpClient(),
+            #endif
+            std::move(onMounted)
+        );
     }
 
     void EXPECT_EXIT_WITH_HELP_MESSAGE(const std::vector<std::string>& args, const std::string &message, cryfs::ErrorCode errorCode) {
@@ -62,7 +69,7 @@ public:
     }
 
     void EXPECT_RUN_ERROR(const std::vector<std::string>& args, const std::string& message, cryfs::ErrorCode errorCode, std::function<void ()> onMounted = [] {}) {
-        FilesystemOutput filesystem_output = run_filesystem(args, boost::none, std::move(onMounted));
+        const FilesystemOutput filesystem_output = run_filesystem(args, boost::none, std::move(onMounted));
 
         EXPECT_EQ(exitCode(errorCode), filesystem_output.exit_code);
         if (!std::regex_search(filesystem_output.stderr_, std::regex(message))) {
@@ -77,7 +84,7 @@ public:
 
         bool successfully_mounted = false;
 
-        FilesystemOutput filesystem_output = run_filesystem(args, mountDir, [&] {
+        const FilesystemOutput filesystem_output = run_filesystem(args, mountDir, [&] {
             successfully_mounted = true;
             onMounted();
         });
@@ -111,7 +118,7 @@ public:
         cpputils::ConditionBarrier isMountedOrFailedBarrier;
 
         std::future<int> exit_code = std::async(std::launch::async, [&] {
-            int exit_code = run(args, [&] { isMountedOrFailedBarrier.release(); });
+            const int exit_code = run(args, [&] { isMountedOrFailedBarrier.release(); });
             // just in case it fails, we also want to release the barrier.
             // if it succeeds, this will release it a second time, which doesn't hurt.
             exited = true;

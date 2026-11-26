@@ -31,7 +31,7 @@ namespace
 
 TEST(BacktraceTest, ContainsTopLevelLine)
 {
-	string backtrace = cpputils::backtrace();
+	const string backtrace = cpputils::backtrace();
 	EXPECT_THAT(backtrace, HasSubstr("BacktraceTest"));
 	EXPECT_THAT(backtrace, HasSubstr("ContainsTopLevelLine"));
 }
@@ -39,7 +39,7 @@ TEST(BacktraceTest, ContainsTopLevelLine)
 
 namespace
 {
-#if !(defined(__clang__) && defined(NDEBUG))
+#if !(defined(__clang__)) || (defined(_MSC_VER) && defined(NDEBUG))
 	std::string call_process_exiting_with_nullptr_violation()
 	{
 		return call_process_exiting_with("nullptr");
@@ -50,6 +50,7 @@ namespace
 		return call_process_exiting_with("exception", message);
 	}
 }
+
 #if defined(_MSC_VER)
 #include <Windows.h>
 namespace
@@ -94,7 +95,7 @@ TEST(BacktraceTest, DoesntCrashOnCaughtException)
 	{
 		throw std::logic_error("exception");
 	}
-	catch (const std::logic_error &e)
+	catch (const std::logic_error &e) // NOLINT(bugprone-empty-catch)
 	{
 		// intentionally empty
 	}
@@ -103,7 +104,7 @@ TEST(BacktraceTest, DoesntCrashOnCaughtException)
 #if !(defined(_MSC_VER) && defined(NDEBUG))
 TEST(BacktraceTest, ContainsBacktrace)
 {
-	string backtrace = cpputils::backtrace();
+	const string backtrace = cpputils::backtrace();
 #if defined(_MSC_VER)
 	EXPECT_THAT(backtrace, HasSubstr("testing::Test::Run"));
 #else
@@ -111,8 +112,8 @@ TEST(BacktraceTest, ContainsBacktrace)
 #endif
 }
 
-#if !(defined(__clang__) && defined(NDEBUG))
-// TODO Can we also make this work on clang in Release mode?
+#if !(defined(__clang__))
+// TODO Can we also make this work on clang?
 TEST(BacktraceTest, ShowBacktraceOnNullptrAccess)
 {
 	auto output = call_process_exiting_with_nullptr_violation();

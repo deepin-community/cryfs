@@ -61,7 +61,7 @@ FixedSizeData<SIZE> FixedSizeData<SIZE>::FromString(const std::string &data) {
   ASSERT(data.size() == STRING_LENGTH, "Wrong string size for parsing FixedSizeData");
   FixedSizeData<SIZE> result;
   {
-    CryptoPP::StringSource _1(data, true,
+    const CryptoPP::StringSource _1(data, true,
       new CryptoPP::HexDecoder(
         new CryptoPP::ArraySink(result._data.data(), BINARY_LENGTH)
       )
@@ -73,7 +73,7 @@ FixedSizeData<SIZE> FixedSizeData<SIZE>::FromString(const std::string &data) {
 template<size_t SIZE>
 std::string FixedSizeData<SIZE>::ToString() const {
   std::string result;
-  CryptoPP::ArraySource(_data.data(), BINARY_LENGTH, true,
+  const CryptoPP::ArraySource _1(_data.data(), BINARY_LENGTH, true,
     new CryptoPP::HexEncoder(
       new CryptoPP::StringSink(result)
     )
@@ -108,7 +108,10 @@ template<size_t SIZE> template<size_t size>
 FixedSizeData<size> FixedSizeData<SIZE>::take() const {
   static_assert(size <= SIZE, "Out of bounds");
   FixedSizeData<size> result;
-  std::memcpy(result._data.data(), _data.data(), size);
+  auto* result_data = result._data.data();
+  if (result_data != nullptr) {
+    std::memcpy(result_data, _data.data(), size);
+  }
   return result;
 }
 
@@ -116,7 +119,10 @@ template<size_t SIZE> template<size_t size>
 FixedSizeData<SIZE-size> FixedSizeData<SIZE>::drop() const {
   static_assert(size <= SIZE, "Out of bounds");
   FixedSizeData<SIZE-size> result;
-  std::memcpy(result._data.data(), _data.data()+size, SIZE-size);
+  auto* result_data = result._data.data();
+  if (result_data != nullptr) {
+    std::memcpy(result_data, _data.data()+size, SIZE-size);
+  }
   return result;
 }
 

@@ -1,53 +1,37 @@
 #!/usr/bin/make -f
 
-# Architectures where unit tests should be DISABLED (cannot compile or run)
-ARCHS_WITHOUT_TESTS := mips mipsel mips64el
-
-# Architectures requiring special ASM configuration
-ARCHS_DISABLE_ASM := armel armhf s390x
-
-# ============================================================================
-
-# Detect if current architecture should skip tests
-DEB_HOST_ARCH ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
-SKIP_TESTS := $(if $(filter $(DEB_HOST_ARCH),$(ARCHS_WITHOUT_TESTS)),yes,no)
-DISABLE_ASM := $(if $(filter $(DEB_HOST_ARCH),$(ARCHS_DISABLE_ASM)),yes,no)
-
 %:
-	dh $@
+	dh $@ --builddirectory=build
+
+CRYFS_BUILD_TYPE = "-DCMAKE_BUILD_TYPE=Debug"
+ifeq (,$(filter debug,$(DEB_BUILD_OPTIONS)))
+	CRYFS_BUILD_TYPE = "-DCMAKE_BUILD_TYPE=Release"
+endif
+
+CRYFS_BUILD_TESTS = "-DBUILD_TESTING=OFF"
+ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
+	CRYFS_BUILD_TESTS = "-DBUILD_TESTING=ON"
+endif
 
 override_dh_auto_configure:
 	mkdir -p build
-	@echo "Building for architecture: $(DEB_HOST_ARCH)"
-	@echo "Skip tests: $(SKIP_TESTS), Disable ASM: $(DISABLE_ASM)"
-	(cd build && cmake .. \
-	    $(if $(filter yes,$(DISABLE_ASM)),-DDISABLE_ASM=ON,) \
-	    -DDEPENDENCY_CONFIG=../cmake-utils/DependenciesFromLocalSystem.cmake \
-	    $(if $(filter yes,$(SKIP_TESTS)),-DBUILD_TESTING=OFF,-DBUILD_TESTING=ON) \
-	    -DCRYFS_UPDATE_CHECKS=OFF)
+	dpkg-architecture
+	if `dpkg-architecture -e armel` || `dpkg-architecture -e armhf` || `dpkg-architecture -e s390x`; then \
+	    echo "Performing armel/armhf/s390x build"; \
+	    dh_auto_configure -- -DDISABLE_ASM=ON $(CRYFS_BUILD_TESTS) -DCRYFS_UPDATE_CHECKS=OFF $(CRYFS_BUILD_TYPE); \
+	else \
+	    dh_auto_configure -- $(CRYFS_BUILD_TESTS) -DCRYFS_UPDATE_CHECKS=OFF $(CRYFS_BUILD_TYPE); \
+	fi
 
-override_dh_auto_build:
-	(cd build && make VERBOSE=1)
-ifneq ($(SKIP_TESTS),yes)
-	@echo "Running unit tests..."
+override_dh_auto_test:
 	./build/test/blobstore/blobstore-test 2>&1
 	./build/test/blockstore/blockstore-test --gtest_filter='-CacheTest_RaceCondition.*' 2>&1
 	# Config Compatibility tests fail on s390x, mipsel, and hppa archs
 	./build/test/cryfs/cryfs-test --gtest_filter='-CryConfigCompatibilityTest.*' 2>&1
 	./build/test/parallelaccessstore/parallelaccessstore-test 2>&1
 	./build/test/gitversion/gitversion-test 2>&1
-else
-	@echo "Skipping unit tests on $(DEB_HOST_ARCH)"
-endif
 	# Test fails with pbuilder, and mipsel
 	# ./build/test/cpp-utils/cpp-utils-test --gtest_filter='-HomedirTest.*' 2>&1
 	# ./build/test/cryfs-cli/cryfs-cli-test
 	# Test requires root (and fuse)
 	# ./build/test/fspp/fspp-test
-
-override_dh_auto_install:
-ifeq ($(SKIP_TESTS),yes)
-	@echo "Removing test executables from debian/cryfs.install";
-	sed -i '/^build\/test\//d' debian/cryfs.install;
-endif
-	dh_install

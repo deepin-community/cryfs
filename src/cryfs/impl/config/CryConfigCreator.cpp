@@ -15,7 +15,7 @@ using boost::none;
 
 namespace cryfs {
 
-    CryConfigCreator::CryConfigCreator(shared_ptr<Console> console, RandomGenerator &encryptionKeyGenerator, LocalStateDir localStateDir)
+    CryConfigCreator::CryConfigCreator(shared_ptr<Console> console, RandomGenerator *encryptionKeyGenerator, LocalStateDir localStateDir)
         :_console(console), _configConsole(console), _encryptionKeyGenerator(encryptionKeyGenerator), _localStateDir(std::move(localStateDir)) {
     }
 
@@ -30,7 +30,7 @@ namespace cryfs {
         config.SetFilesystemId(_generateFilesystemID());
         auto encryptionKey = _generateEncKey(config.Cipher());
         auto localState = LocalStateMetadata::loadOrGenerate(_localStateDir.forFilesystemId(config.FilesystemId()), cpputils::Data::FromString(encryptionKey), allowReplacedFilesystem);
-        uint32_t myClientId = localState.myClientId();
+        const uint32_t myClientId = localState.myClientId();
         config.SetEncryptionKey(std::move(encryptionKey));
         config.SetExclusiveClientId(_generateExclusiveClientId(missingBlockIsIntegrityViolationFromCommandLine, myClientId));
 #ifndef CRYFS_NO_COMPATIBILITY
@@ -85,6 +85,6 @@ namespace cryfs {
     }
 
     CryConfig::FilesystemID CryConfigCreator::_generateFilesystemID() {
-        return Random::PseudoRandom().getFixedSize<CryConfig::FilesystemID::BINARY_LENGTH>();
+        return Random::PseudoRandom()->getFixedSize<CryConfig::FilesystemID::BINARY_LENGTH>();
     }
 }

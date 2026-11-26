@@ -12,8 +12,6 @@ set(SOURCES
     implementations/onblocks/datanodestore/DataNodeViewTest.cpp
     implementations/onblocks/datanodestore/DataNodeStoreTest.cpp
     implementations/onblocks/datatreestore/testutils/DataTreeTest.cpp
-    implementations/onblocks/datatreestore/impl/GetLowestRightBorderNodeWithMoreThanOneChildOrNullTest.cpp
-    implementations/onblocks/datatreestore/impl/GetLowestInnerRightBorderNodeWithLessThanKChildrenOrNullTest.cpp
     implementations/onblocks/datatreestore/DataTreeTest_Performance.cpp
     implementations/onblocks/datatreestore/DataTreeTest_ResizeByTraversing.cpp
     implementations/onblocks/datatreestore/DataTreeTest_NumStoredBytes.cpp
@@ -27,7 +25,7 @@ set(SOURCES
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES})
-target_link_libraries(${PROJECT_NAME} my-gtest-main googletest blobstore)
+target_link_libraries(${PROJECT_NAME} my-gtest-main blobstore)
 add_test(${PROJECT_NAME} ${PROJECT_NAME})
 
 target_enable_style_warnings(${PROJECT_NAME})

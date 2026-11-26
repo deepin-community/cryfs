@@ -1,6 +1,7 @@
+#ifdef CRYFS_UPDATE_CHECKS
+
 #include "VersionChecker.h"
 #include <sstream>
-#include <cpp-utils/network/CurlHttpClient.h>
 #include <boost/property_tree/json_parser.hpp>
 #include <cpp-utils/logging/logging.h>
 #include <boost/foreach.hpp>
@@ -47,7 +48,7 @@ namespace cryfs_cli {
     }
 
     optional<ptree> VersionChecker::_getVersionInfo(HttpClient* httpClient) {
-        long timeoutMsec = 2000;
+        const long timeoutMsec = 2000;
 		string response;
 		try {
 			response = httpClient->get("https://www.cryfs.org/version_info.json", timeoutMsec);
@@ -72,3 +73,5 @@ namespace cryfs_cli {
     }
 
 }
+
+#endif

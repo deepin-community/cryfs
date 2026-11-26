@@ -106,7 +106,7 @@ std::vector<BlockId> getKnownBlobIds(const path& basedir, const CryConfigLoader:
     auto blockStore = makeBlockStore(basedir, config, localStateDir);
     auto fsBlobStore = make_unique_ref<FsBlobStore>(make_unique_ref<BlobStoreOnBlocks>(std::move(blockStore), config.configFile->config()->BlocksizeBytes()));
 
-    std::vector<BlockId> result;
+    const std::vector<BlockId> result;
     AccumulateBlockIds knownBlobIds;
     cout << "Listing all file system entities (i.e. blobs)..." << flush;
     auto rootId = BlockId::FromString(config.configFile->config()->RootBlob());
@@ -125,9 +125,10 @@ std::vector<BlockId> getKnownBlockIds(const path& basedir, const CryConfigLoader
     const uint32_t numNodes = nodeStore->numNodes();
     knownBlockIds.reserve(numNodes);
     cout << "Listing all blocks used by these file system entities..." << endl;
+    auto progress_bar = ProgressBar(numNodes);
     for (const auto& blobId : knownBlobIds) {
         forEachReachableBlockInBlob(nodeStore.get(), blobId, {
-            ProgressBar(numNodes).callback(),
+            progress_bar.callback(),
             knownBlockIds.callback()
         });
     }
@@ -175,7 +176,7 @@ int main(int argc, char* argv[]) {
         std::cerr << "Usage: cryfs-stats [basedir]" << std::endl;
         exit(1);
     }
-    path basedir = argv[1];
+    const path basedir = argv[1];
     std::cout << "Calculating stats for filesystem at " << basedir << std::endl;
 
     auto console = std::make_shared<cpputils::IOStreamConsole>();
@@ -221,7 +222,7 @@ int main(int argc, char* argv[]) {
     set<BlockId> unaccountedBlocks = getAllBlockIds(basedir, config.right(), localStateDir);
     cout << "done" << endl;
 
-    vector<BlockId> accountedBlocks = getKnownBlockIds(basedir, config.right(), localStateDir);
+    const vector<BlockId> accountedBlocks = getKnownBlockIds(basedir, config.right(), localStateDir);
     for (const BlockId& blockId : accountedBlocks) {
         auto num_erased = unaccountedBlocks.erase(blockId);
         ASSERT(1 == num_erased, "Blob id referenced by directory entry but didn't found it on disk? This can't happen.");
@@ -232,7 +233,7 @@ int main(int argc, char* argv[]) {
     auto blockStore = makeBlockStore(basedir, config.right(), localStateDir);
     auto nodeStore = make_unique_ref<DataNodeStore>(std::move(blockStore), config.right().configFile->config()->BlocksizeBytes());
 
-    uint32_t numUnaccountedBlocks = unaccountedBlocks.size();
+    const uint32_t numUnaccountedBlocks = unaccountedBlocks.size();
     uint32_t numLeaves = 0;
     uint32_t numInner = 0;
     console->print("Unaccounted blocks: " + std::to_string(unaccountedBlocks.size()) + "\n");

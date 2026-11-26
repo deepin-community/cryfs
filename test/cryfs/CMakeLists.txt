@@ -16,15 +16,17 @@ set(SOURCES
         impl/config/CryConfigConsoleTest.cpp
         impl/config/CryPasswordBasedKeyProviderTest.cpp
         impl/config/CryPresetPasswordBasedKeyProviderTest.cpp
+        impl/filesystem/testutils/CryTestBase.cpp
         impl/filesystem/CryFsTest.cpp
-        impl/filesystem/CryNodeTest.cpp
+        impl/filesystem/CryNodeTest_Rename.cpp
+        impl/filesystem/CryNodeTest_RenameNested.cpp
         impl/filesystem/FileSystemTest.cpp
         impl/localstate/LocalStateMetadataTest.cpp
         impl/localstate/BasedirMetadataTest.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES})
-target_link_libraries(${PROJECT_NAME} my-gtest-main googletest cryfs)
+target_link_libraries(${PROJECT_NAME} my-gtest-main cryfs)
 add_test(${PROJECT_NAME} ${PROJECT_NAME})
 
 target_enable_style_warnings(${PROJECT_NAME})

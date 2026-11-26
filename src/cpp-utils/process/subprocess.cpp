@@ -1,10 +1,22 @@
 #include "subprocess.h"
+#include <array>
+#include <boost/asio.hpp>
+#include <boost/version.hpp>
+#if BOOST_VERSION < 108800
+#include <boost/process.hpp>
+#else
+#define BOOST_PROCESS_VERSION 1
+#include <boost/process/v1/args.hpp>
+#include <boost/process/v1/async_pipe.hpp>
+#include <boost/process/v1/child.hpp>
+#include <boost/process/v1/exe.hpp>
+#include <boost/process/v1/io.hpp>
+#include <boost/process/v1/search_path.hpp>
+#endif
+#include <cerrno>
+#include <cstddef>
 #include <cstdio>
 #include <stdexcept>
-#include <cerrno>
-#include <array>
-#include <boost/process.hpp>
-#include <boost/asio.hpp>
 
 using std::string;
 using std::vector;
@@ -83,9 +95,9 @@ namespace cpputils
 		class InputPipeHandler final
 		{
 		public:
-			explicit InputPipeHandler(ba::io_context* ctx, const std::string& input)
+			explicit InputPipeHandler(ba::io_context* ctx, const std::string* input)
 			: input_(input)
-			, buffer_(ba::buffer(input_))
+			, buffer_(ba::buffer(*input_))
 			, pipe_(*ctx) {
 
 			}
@@ -108,7 +120,7 @@ namespace cpputils
 				);
 			}
 		private:
-			const std::string& input_;
+			const std::string* input_;
 			ba::const_buffer buffer_;
 			bp::async_pipe pipe_;
 		};
@@ -139,7 +151,7 @@ namespace cpputils
 
 		OutputPipeHandler stdout_handler(&ctx);
 		OutputPipeHandler stderr_handler(&ctx);
-		InputPipeHandler stdin_handler(&ctx, input);
+		InputPipeHandler stdin_handler(&ctx, &input);
 
 		bp::child child(
 			bp::exe = executable.string(),
