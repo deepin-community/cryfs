@@ -29,7 +29,7 @@ public:
         std::memset(&new_signal_handler, 0, sizeof(new_signal_handler));
         new_signal_handler.sa_handler = handler;  // NOLINT(cppcoreguidelines-pro-type-union-access)
         new_signal_handler.sa_flags = SA_RESTART;
-        int error = sigfillset(&new_signal_handler.sa_mask);  // block all signals while signal handler is running
+        const int error = sigfillset(&new_signal_handler.sa_mask);  // block all signals while signal handler is running
         if (0 != error) {
             throw std::runtime_error("Error calling sigfillset. Errno: " + std::to_string(errno));
         }
@@ -47,7 +47,7 @@ public:
 
 private:
     static void _sigaction(int signal, struct sigaction *new_handler, struct sigaction *old_handler) {
-        int error = sigaction(signal, new_handler, old_handler);
+        const int error = sigaction(signal, new_handler, old_handler);
         if (0 != error) {
             throw std::runtime_error("Error calling sigaction. Errno: " + std::to_string(errno));
         }
@@ -61,6 +61,8 @@ private:
 
 #else
 namespace details {
+template<SignalHandlerFunction* handler> void wrap_signal_handler(int signal);
+
 // The Linux default behavior (i.e. the way we set up sigaction above) is to disable signal processing while the signal
 // handler is running and to re-enable the custom handler once processing is finished. The Windows default behavior
 // is to reset the handler to the default handler directly before executing the handler, i.e. the handler will only
@@ -83,7 +85,8 @@ public:
     }
 
     ~SignalHandlerRunningRAII() {
-        SignalHandlerFunction* old_handler = ::signal(_signal, &details::wrap_signal_handler<handler>);
+        SignalHandlerFunction *new_handler = &wrap_signal_handler<handler>;
+        SignalHandlerFunction* old_handler = ::signal(_signal, new_handler);
         if (old_handler == SIG_ERR) {
             throw std::logic_error("Error resetting signal() after calling handler. Errno: " + std::to_string(errno));
         }
@@ -101,6 +104,7 @@ void wrap_signal_handler(int signal) {
     SignalHandlerRunningRAII<handler> disable_signal_processing_while_handler_running_and_reset_handler_afterwards(signal);
     (*handler)(signal);
 }
+
 }
 
 template<SignalHandlerFunction* handler>
@@ -108,7 +112,8 @@ class SignalHandlerRAII final {
 public:
     explicit SignalHandlerRAII(int signal)
     : _old_handler(nullptr), _signal(signal) {
-        _old_handler = ::signal(_signal, &details::wrap_signal_handler<handler>);
+        SignalHandlerFunction* new_handler = &details::wrap_signal_handler<handler>;
+        _old_handler = ::signal(_signal, new_handler);
         if (_old_handler == SIG_ERR) {
             throw std::logic_error("Error calling signal(). Errno: " + std::to_string(errno));
         }

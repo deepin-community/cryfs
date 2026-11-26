@@ -40,24 +40,24 @@ using namespace fspp::fuse;
 using cpputils::set_thread_name;
 
 namespace {
-bool is_valid_fspp_path(const bf::path& path) {
-  // TODO In boost 1.63, we can use path.generic() or path.generic_path() instead of path.generic_string()
-  return path.has_root_directory()                     // must be absolute path
-         && !path.has_root_name()                      // on Windows, it shouldn't have a device specifier (i.e. no "C:")
-         && (path.string() == path.generic_string());  // must use portable '/' as directory separator
-}
-
-class ThreadNameForDebugging final {
-public:
-  ThreadNameForDebugging(const string& threadName) {
-    std::string name = "fspp_" + threadName;
-    set_thread_name(name.c_str());
+  bool is_valid_fspp_path(const bf::path& path) {
+    // TODO In boost 1.63, we can use path.generic() or path.generic_path() instead of path.generic_string()
+    return path.has_root_directory()                    // must be absolute path
+          && !path.has_root_name()                      // on Windows, it shouldn't have a device specifier (i.e. no "C:")
+          && (path.string() == path.generic_string());  // must use portable '/' as directory separator
   }
 
-  ~ThreadNameForDebugging() {
-    set_thread_name("fspp_idle");
-  }
-};
+  class ThreadNameForDebugging final {
+  public:
+    ThreadNameForDebugging(const string& threadName) {
+      const std::string name = "fspp_" + threadName;
+      set_thread_name(name.c_str());
+    }
+
+    ~ThreadNameForDebugging() {
+      set_thread_name("fspp_idle");
+    }
+  };
 }
 
 #define FUSE_OBJ (static_cast<Fuse *>(fuse_get_context()->private_data))
@@ -66,191 +66,191 @@ public:
 //#define FSPP_LOG 1
 
 namespace {
-int fusepp_getattr(const char *path, fspp::fuse::STAT *stbuf) {
-  int rs = FUSE_OBJ->getattr(bf::path(path), stbuf);
-  return rs;
-}
-
-int fusepp_fgetattr(const char *path, fspp::fuse::STAT *stbuf, fuse_file_info *fileinfo) {
-  return FUSE_OBJ->fgetattr(bf::path(path), stbuf, fileinfo);
-}
-
-int fusepp_readlink(const char *path, char *buf, size_t size) {
-  return FUSE_OBJ->readlink(bf::path(path), buf, size);
-}
-
-int fusepp_mknod(const char *path, ::mode_t mode, dev_t rdev) {
-  return FUSE_OBJ->mknod(bf::path(path), mode, rdev);
-}
-
-int fusepp_mkdir(const char *path, ::mode_t mode) {
-  return FUSE_OBJ->mkdir(bf::path(path), mode);
-}
-
-int fusepp_unlink(const char *path) {
-  return FUSE_OBJ->unlink(bf::path(path));
-}
-
-int fusepp_rmdir(const char *path) {
-  return FUSE_OBJ->rmdir(bf::path(path));
-}
-
-int fusepp_symlink(const char *to, const char *from) {
-  return FUSE_OBJ->symlink(bf::path(to), bf::path(from));
-}
-
-int fusepp_rename(const char *from, const char *to) {
-  return FUSE_OBJ->rename(bf::path(from), bf::path(to));
-}
-
-int fusepp_link(const char *from, const char *to) {
-  return FUSE_OBJ->link(bf::path(from), bf::path(to));
-}
-
-int fusepp_chmod(const char *path, ::mode_t mode) {
-  return FUSE_OBJ->chmod(bf::path(path), mode);
-}
-
-int fusepp_chown(const char *path, ::uid_t uid, ::gid_t gid) {
-  return FUSE_OBJ->chown(bf::path(path), uid, gid);
-}
-
-int fusepp_truncate(const char *path, int64_t size) {
-  return FUSE_OBJ->truncate(bf::path(path), size);
-}
-
-int fusepp_ftruncate(const char *path, int64_t size, fuse_file_info *fileinfo) {
-  return FUSE_OBJ->ftruncate(bf::path(path), size, fileinfo);
-}
-
-int fusepp_utimens(const char *path, const timespec times[2]) {  // NOLINT(cppcoreguidelines-avoid-c-arrays)
-  return FUSE_OBJ->utimens(bf::path(path), {times[0], times[1]});
-}
-
-int fusepp_open(const char *path, fuse_file_info *fileinfo) {
-  return FUSE_OBJ->open(bf::path(path), fileinfo);
-}
-
-int fusepp_release(const char *path, fuse_file_info *fileinfo) {
-  return FUSE_OBJ->release(bf::path(path), fileinfo);
-}
-
-int fusepp_read(const char *path, char *buf, size_t size, int64_t offset, fuse_file_info *fileinfo) {
-  return FUSE_OBJ->read(bf::path(path), buf, size, offset, fileinfo);
-}
-
-int fusepp_write(const char *path, const char *buf, size_t size, int64_t offset, fuse_file_info *fileinfo) {
-  return FUSE_OBJ->write(bf::path(path), buf, size, offset, fileinfo);
-}
-
-int fusepp_statfs(const char *path, struct statvfs *fsstat) {
-  return FUSE_OBJ->statfs(bf::path(path), fsstat);
-}
-
-int fusepp_flush(const char *path, fuse_file_info *fileinfo) {
-  return FUSE_OBJ->flush(bf::path(path), fileinfo);
-}
-
-int fusepp_fsync(const char *path, int datasync, fuse_file_info *fileinfo) {
-  return FUSE_OBJ->fsync(bf::path(path), datasync, fileinfo);
-}
-
-//int fusepp_setxattr(const char*, const char*, const char*, size_t, int)
-//int fusepp_getxattr(const char*, const char*, char*, size_t)
-//int fusepp_listxattr(const char*, char*, size_t)
-//int fusepp_removexattr(const char*, const char*)
-
-int fusepp_opendir(const char *path, fuse_file_info *fileinfo) {
-  return FUSE_OBJ->opendir(bf::path(path), fileinfo);
-}
-
-int fusepp_readdir(const char *path, void *buf, fuse_fill_dir_t filler, int64_t offset, fuse_file_info *fileinfo) {
-  return FUSE_OBJ->readdir(bf::path(path), buf, filler, offset, fileinfo);
-}
-
-int fusepp_releasedir(const char *path, fuse_file_info *fileinfo) {
-  return FUSE_OBJ->releasedir(bf::path(path), fileinfo);
-}
-
-int fusepp_fsyncdir(const char *path, int datasync, fuse_file_info *fileinfo) {
-  return FUSE_OBJ->fsyncdir(bf::path(path), datasync, fileinfo);
-}
-
-void* fusepp_init(fuse_conn_info *conn) {
-  auto f = FUSE_OBJ;
-  f->init(conn);
-  return f;
-}
-
-void fusepp_destroy(void *userdata) {
-  auto f = FUSE_OBJ;
-  ASSERT(userdata == f, "Wrong userdata set");
-  UNUSED(userdata); //In case the assert is disabled
-  f->destroy();
-}
-
-int fusepp_access(const char *path, int mask) {
-  return FUSE_OBJ->access(bf::path(path), mask);
-}
-
-int fusepp_create(const char *path, ::mode_t mode, fuse_file_info *fileinfo) {
-  return FUSE_OBJ->create(bf::path(path), mode, fileinfo);
-}
-
-/*int fusepp_lock(const char*, fuse_file_info*, int cmd, flock*)
-int fusepp_bmap(const char*, size_t blocksize, uint64_t *idx)
-int fusepp_ioctl(const char*, int cmd, void *arg, fuse_file_info*, unsigned int flags, void *data)
-int fusepp_poll(const char*, fuse_file_info*, fuse_pollhandle *ph, unsigned *reventsp)
-int fusepp_write_buf(const char*, fuse_bufvec *buf, int64_t off, fuse_file_info*)
-int fusepp_read_buf(const chas*, struct fuse_bufvec **bufp, size_t size, int64_t off, fuse_file_info*)
-int fusepp_flock(const char*, fuse_file_info*, int op)
-int fusepp_fallocate(const char*, int, int64_t, int64_t, fuse_file_info*)*/
-
-fuse_operations *operations() {
-  static std::unique_ptr<fuse_operations> singleton(nullptr);
-
-  if (!singleton) {
-    singleton = std::make_unique<fuse_operations>();
-    singleton->getattr = &fusepp_getattr;
-    singleton->fgetattr = &fusepp_fgetattr;
-    singleton->readlink = &fusepp_readlink;
-    singleton->mknod = &fusepp_mknod;
-    singleton->mkdir = &fusepp_mkdir;
-    singleton->unlink = &fusepp_unlink;
-    singleton->rmdir = &fusepp_rmdir;
-    singleton->symlink = &fusepp_symlink;
-    singleton->rename = &fusepp_rename;
-    singleton->link = &fusepp_link;
-    singleton->chmod = &fusepp_chmod;
-    singleton->chown = &fusepp_chown;
-    singleton->truncate = &fusepp_truncate;
-    singleton->utimens = &fusepp_utimens;
-    singleton->open = &fusepp_open;
-    singleton->read = &fusepp_read;
-    singleton->write = &fusepp_write;
-    singleton->statfs = &fusepp_statfs;
-    singleton->flush = &fusepp_flush;
-    singleton->release = &fusepp_release;
-    singleton->fsync = &fusepp_fsync;
-  /*#ifdef HAVE_SYS_XATTR_H
-    singleton->setxattr = &fusepp_setxattr;
-    singleton->getxattr = &fusepp_getxattr;
-    singleton->listxattr = &fusepp_listxattr;
-    singleton->removexattr = &fusepp_removexattr;
-  #endif*/
-    singleton->opendir = &fusepp_opendir;
-    singleton->readdir = &fusepp_readdir;
-    singleton->releasedir = &fusepp_releasedir;
-    singleton->fsyncdir = &fusepp_fsyncdir;
-    singleton->init = &fusepp_init;
-    singleton->destroy = &fusepp_destroy;
-    singleton->access = &fusepp_access;
-    singleton->create = &fusepp_create;
-    singleton->ftruncate = &fusepp_ftruncate;
+  int fusepp_getattr(const char *path, fspp::fuse::STAT *stbuf) {
+    const int rs = FUSE_OBJ->getattr(bf::path(path), stbuf);
+    return rs;
   }
 
-  return singleton.get();
-}
+  int fusepp_fgetattr(const char *path, fspp::fuse::STAT *stbuf, fuse_file_info *fileinfo) {
+    return FUSE_OBJ->fgetattr(bf::path(path), stbuf, fileinfo);
+  }
+
+  int fusepp_readlink(const char *path, char *buf, size_t size) {
+    return FUSE_OBJ->readlink(bf::path(path), buf, size);
+  }
+
+  int fusepp_mknod(const char *path, ::mode_t mode, dev_t rdev) {
+    return FUSE_OBJ->mknod(bf::path(path), mode, rdev);
+  }
+
+  int fusepp_mkdir(const char *path, ::mode_t mode) {
+    return FUSE_OBJ->mkdir(bf::path(path), mode);
+  }
+
+  int fusepp_unlink(const char *path) {
+    return FUSE_OBJ->unlink(bf::path(path));
+  }
+
+  int fusepp_rmdir(const char *path) {
+    return FUSE_OBJ->rmdir(bf::path(path));
+  }
+
+  int fusepp_symlink(const char *to, const char *from) {
+    return FUSE_OBJ->symlink(bf::path(to), bf::path(from));
+  }
+
+  int fusepp_rename(const char *from, const char *to) {
+    return FUSE_OBJ->rename(bf::path(from), bf::path(to));
+  }
+
+  int fusepp_link(const char *from, const char *to) {
+    return FUSE_OBJ->link(bf::path(from), bf::path(to));
+  }
+
+  int fusepp_chmod(const char *path, ::mode_t mode) {
+    return FUSE_OBJ->chmod(bf::path(path), mode);
+  }
+
+  int fusepp_chown(const char *path, ::uid_t uid, ::gid_t gid) {
+    return FUSE_OBJ->chown(bf::path(path), uid, gid);
+  }
+
+  int fusepp_truncate(const char *path, int64_t size) {
+    return FUSE_OBJ->truncate(bf::path(path), size);
+  }
+
+  int fusepp_ftruncate(const char *path, int64_t size, fuse_file_info *fileinfo) {
+    return FUSE_OBJ->ftruncate(bf::path(path), size, fileinfo);
+  }
+
+  int fusepp_utimens(const char *path, const timespec times[2]) {  // NOLINT(cppcoreguidelines-avoid-c-arrays)
+    return FUSE_OBJ->utimens(bf::path(path), {times[0], times[1]});
+  }
+
+  int fusepp_open(const char *path, fuse_file_info *fileinfo) {
+    return FUSE_OBJ->open(bf::path(path), fileinfo);
+  }
+
+  int fusepp_release(const char *path, fuse_file_info *fileinfo) {
+    return FUSE_OBJ->release(bf::path(path), fileinfo);
+  }
+
+  int fusepp_read(const char *path, char *buf, size_t size, int64_t offset, fuse_file_info *fileinfo) {
+    return FUSE_OBJ->read(bf::path(path), buf, size, offset, fileinfo);
+  }
+
+  int fusepp_write(const char *path, const char *buf, size_t size, int64_t offset, fuse_file_info *fileinfo) {
+    return FUSE_OBJ->write(bf::path(path), buf, size, offset, fileinfo);
+  }
+
+  int fusepp_statfs(const char *path, struct statvfs *fsstat) {
+    return FUSE_OBJ->statfs(bf::path(path), fsstat);
+  }
+
+  int fusepp_flush(const char *path, fuse_file_info *fileinfo) {
+    return FUSE_OBJ->flush(bf::path(path), fileinfo);
+  }
+
+  int fusepp_fsync(const char *path, int datasync, fuse_file_info *fileinfo) {
+    return FUSE_OBJ->fsync(bf::path(path), datasync, fileinfo);
+  }
+
+  //int fusepp_setxattr(const char*, const char*, const char*, size_t, int)
+  //int fusepp_getxattr(const char*, const char*, char*, size_t)
+  //int fusepp_listxattr(const char*, char*, size_t)
+  //int fusepp_removexattr(const char*, const char*)
+
+  int fusepp_opendir(const char *path, fuse_file_info *fileinfo) {
+    return FUSE_OBJ->opendir(bf::path(path), fileinfo);
+  }
+
+  int fusepp_readdir(const char *path, void *buf, fuse_fill_dir_t filler, int64_t offset, fuse_file_info *fileinfo) {
+    return FUSE_OBJ->readdir(bf::path(path), buf, filler, offset, fileinfo);
+  }
+
+  int fusepp_releasedir(const char *path, fuse_file_info *fileinfo) {
+    return FUSE_OBJ->releasedir(bf::path(path), fileinfo);
+  }
+
+  int fusepp_fsyncdir(const char *path, int datasync, fuse_file_info *fileinfo) {
+    return FUSE_OBJ->fsyncdir(bf::path(path), datasync, fileinfo);
+  }
+
+  void* fusepp_init(fuse_conn_info *conn) {
+    auto f = FUSE_OBJ;
+    f->init(conn);
+    return f;
+  }
+
+  void fusepp_destroy(void *userdata) {
+    auto f = FUSE_OBJ;
+    ASSERT(userdata == f, "Wrong userdata set");
+    UNUSED(userdata); //In case the assert is disabled
+    f->destroy();
+  }
+
+  int fusepp_access(const char *path, int mask) {
+    return FUSE_OBJ->access(bf::path(path), mask);
+  }
+
+  int fusepp_create(const char *path, ::mode_t mode, fuse_file_info *fileinfo) {
+    return FUSE_OBJ->create(bf::path(path), mode, fileinfo);
+  }
+
+  /*int fusepp_lock(const char*, fuse_file_info*, int cmd, flock*)
+  int fusepp_bmap(const char*, size_t blocksize, uint64_t *idx)
+  int fusepp_ioctl(const char*, int cmd, void *arg, fuse_file_info*, unsigned int flags, void *data)
+  int fusepp_poll(const char*, fuse_file_info*, fuse_pollhandle *ph, unsigned *reventsp)
+  int fusepp_write_buf(const char*, fuse_bufvec *buf, int64_t off, fuse_file_info*)
+  int fusepp_read_buf(const chas*, struct fuse_bufvec **bufp, size_t size, int64_t off, fuse_file_info*)
+  int fusepp_flock(const char*, fuse_file_info*, int op)
+  int fusepp_fallocate(const char*, int, int64_t, int64_t, fuse_file_info*)*/
+
+  fuse_operations *operations() {
+    static std::unique_ptr<fuse_operations> singleton(nullptr);
+
+    if (!singleton) {
+      singleton = std::make_unique<fuse_operations>();
+      singleton->getattr = &fusepp_getattr;
+      singleton->fgetattr = &fusepp_fgetattr;
+      singleton->readlink = &fusepp_readlink;
+      singleton->mknod = &fusepp_mknod;
+      singleton->mkdir = &fusepp_mkdir;
+      singleton->unlink = &fusepp_unlink;
+      singleton->rmdir = &fusepp_rmdir;
+      singleton->symlink = &fusepp_symlink;
+      singleton->rename = &fusepp_rename;
+      singleton->link = &fusepp_link;
+      singleton->chmod = &fusepp_chmod;
+      singleton->chown = &fusepp_chown;
+      singleton->truncate = &fusepp_truncate;
+      singleton->utimens = &fusepp_utimens;
+      singleton->open = &fusepp_open;
+      singleton->read = &fusepp_read;
+      singleton->write = &fusepp_write;
+      singleton->statfs = &fusepp_statfs;
+      singleton->flush = &fusepp_flush;
+      singleton->release = &fusepp_release;
+      singleton->fsync = &fusepp_fsync;
+    /*#ifdef HAVE_SYS_XATTR_H
+      singleton->setxattr = &fusepp_setxattr;
+      singleton->getxattr = &fusepp_getxattr;
+      singleton->listxattr = &fusepp_listxattr;
+      singleton->removexattr = &fusepp_removexattr;
+    #endif*/
+      singleton->opendir = &fusepp_opendir;
+      singleton->readdir = &fusepp_readdir;
+      singleton->releasedir = &fusepp_releasedir;
+      singleton->fsyncdir = &fusepp_fsyncdir;
+      singleton->init = &fusepp_init;
+      singleton->destroy = &fusepp_destroy;
+      singleton->access = &fusepp_access;
+      singleton->create = &fusepp_create;
+      singleton->ftruncate = &fusepp_ftruncate;
+    }
+
+    return singleton.get();
+  }
 }
 
 Fuse::~Fuse() {
@@ -292,17 +292,15 @@ void Fuse::runInBackground(const bf::path &mountdir, vector<string> fuseOptions)
 
 void Fuse::_removeAndWarnIfExists(vector<string> *fuseOptions, const std::string &option) {
   auto found = std::find(fuseOptions->begin(), fuseOptions->end(), option);
-  if (found != fuseOptions->end()) {
+  while (found != fuseOptions->end()) {
     LOG(WARN, "The fuse option {} only works when running in foreground. Removing fuse option.", option);
-    do {
-      fuseOptions->erase(found);
-      found = std::find(fuseOptions->begin(), fuseOptions->end(), option);
-    } while (found != fuseOptions->end());
+    fuseOptions->erase(found);
+    found = std::find(fuseOptions->begin(), fuseOptions->end(), option);
   }
 }
 
 namespace {
-void extractAllAtimeOptionsAndRemoveOnesUnknownToLibfuse_(string* csv_options, vector<string>* result) {
+  void extractAllAtimeOptionsAndRemoveOnesUnknownToLibfuse_(string* csv_options, vector<string>* result) {
     const auto is_fuse_supported_atime_flag = [] (const std::string& flag) {
         constexpr std::array<const char*, 2> flags = {"noatime", "atime"};
         return flags.end() != std::find(flags.begin(), flags.end(), flag);
@@ -311,55 +309,88 @@ void extractAllAtimeOptionsAndRemoveOnesUnknownToLibfuse_(string* csv_options, v
         constexpr std::array<const char*, 3> flags = {"strictatime", "relatime", "nodiratime"};
         return flags.end() != std::find(flags.begin(), flags.end(), flag);
     };
-    *csv_options = ranges::make_subrange(csv_options->begin(), csv_options->end())
-        | ranges::views::split(',')
-        | ranges::views::filter(
-            [&] (auto&& elem_) {
-                // TODO string_view would be better
-                std::string elem(&*elem_.begin(), ranges::distance(elem_));
-                if (is_fuse_unsupported_atime_flag(elem)) {
-                    result->push_back(elem);
-                    return false;
-                }
-                if (is_fuse_supported_atime_flag(elem)) {
-                    result->push_back(elem);
-                }
-                return true;
-            })
-        | ranges::views::join(',')
-        | ranges::to<string>();
-}
+    *csv_options = ranges::make_subrange(csv_options->begin(), csv_options->end()) | ranges::views::split(',') | ranges::views::filter(
+      [&](auto &&elem_) {
+          // TODO string_view would be better
+          const std::string elem(&*elem_.begin(), ranges::distance(elem_));
+          if (is_fuse_unsupported_atime_flag(elem)) {
+              result->push_back(elem);
+              return false;
+          }
+          if (is_fuse_supported_atime_flag(elem)) {
+              result->push_back(elem);
+          }
+          return true;
+      }) | ranges::views::join(',') | ranges::to<string>();
+  }
 
-// Return a list of all atime options (e.g. atime, noatime, relatime, strictatime, nodiratime) that occur in the
-// fuseOptions input. They must be preceded by a '-o', i.e. {..., '-o', 'noatime', ...} and multiple ones can be
-// csv-concatenated, i.e. {..., '-o', 'atime,nodiratime', ...}.
-// Also, this function removes all of these atime options that are unknown to libfuse (i.e. all except atime and noatime)
-// from the input fuseOptions so we can pass it on to libfuse without crashing.
-vector<string> extractAllAtimeOptionsAndRemoveOnesUnknownToLibfuse_(vector<string>* fuseOptions) {
+  // Return a list of all atime options (e.g. atime, noatime, relatime, strictatime, nodiratime) that occur in the
+  // fuseOptions input. They must be preceded by a '-o', i.e. {..., '-o', 'noatime', ...} and multiple ones can be
+  // csv-concatenated, i.e. {..., '-o', 'atime,nodiratime', ...}.
+  // Also, this function removes all of these atime options that are unknown to libfuse (i.e. all except atime and noatime)
+  // from the input fuseOptions so we can pass it on to libfuse without crashing.
+  vector<string> extractAllAtimeOptionsAndRemoveOnesUnknownToLibfuse_(vector<string>* fuseOptions) {
     vector<string> result;
     bool lastOptionWasDashO = false;
-    for (string& option : *fuseOptions) {
-        if (lastOptionWasDashO) {
-            extractAllAtimeOptionsAndRemoveOnesUnknownToLibfuse_(&option, &result);
+    for (size_t i = 0; i < fuseOptions->size(); ++i) {
+      string &option = (*fuseOptions)[i];
+      if (lastOptionWasDashO) {
+        extractAllAtimeOptionsAndRemoveOnesUnknownToLibfuse_(&option, &result);
+        if (option.empty()) {
+          // All options were removed, remove the empty argument
+          fuseOptions->erase(fuseOptions->begin() + i);
+          --i;
+          // And also remove the now value-less '-o' before it
+          fuseOptions->erase(fuseOptions->begin() + i);
+          --i;
         }
-        lastOptionWasDashO = (option == "-o");
+      }
+      lastOptionWasDashO = (option == "-o");
     }
+
     return result;
-}
+  }
 }
 
 void Fuse::_run(const bf::path &mountdir, vector<string> fuseOptions) {
-#if defined(__GLIBC__)|| defined(__APPLE__) || defined(_MSC_VER)
+#if defined(__GLIBC__) || defined(__APPLE__) || defined(_MSC_VER)
   // Avoid encoding errors for non-utf8 characters, see https://github.com/cryfs/cryfs/issues/247
   // this is ifdef'd out for non-glibc linux, because musl doesn't handle this correctly.
+  #ifdef __clang__
+  #pragma clang diagnostic push
+  #pragma clang diagnostic ignored "-Wdeprecated-declarations"
+  #endif
   bf::path::imbue(std::locale(std::locale(), new std::codecvt_utf8_utf16<wchar_t>()));
+  #ifdef __clang__
+  #pragma clang diagnostic pop
+  #endif
+#endif
+
+#if defined(_MSC_VER)
+  auto dokan_driver_version = DokanDriverVersion();
+  if (dokan_driver_version == 0) {
+    std::cerr << "Error: Did not find DokanY driver. Please install the newest version of DokanY from https://github.com/dokan-dev/dokany/releases" << std::endl;
+    return;
+  }
+  if (dokan_driver_version != 400) {
+    std::cerr << "Error: Unknown version of DokanY driver: " << dokan_driver_version << std::endl;
+    return;
+  }
+#endif
+
+#if defined(_MSC_VER)
+  if (!mountdir.has_root_name() || mountdir.has_root_directory() || mountdir.has_relative_path()) {
+     // TODO Can we fix this and make mounting to non-drives work?
+     std::cerr << "Unsupported mount directory " << mountdir << ". CryFS on Windows currently only supports mounting to drives, e.g. 'G:'" << std::endl;
+     return;
+  }
 #endif
 
   _mountdir = mountdir;
 
   ASSERT(_argv.size() == 0, "Filesystem already started");
 
-  vector<string> atimeOptions = extractAllAtimeOptionsAndRemoveOnesUnknownToLibfuse_(&fuseOptions);
+  const vector<string> atimeOptions = extractAllAtimeOptionsAndRemoveOnesUnknownToLibfuse_(&fuseOptions);
   _createContext(atimeOptions);
 
   _argv = _build_argv(mountdir, fuseOptions);
@@ -368,55 +399,55 @@ void Fuse::_run(const bf::path &mountdir, vector<string> fuseOptions) {
 }
 
 void Fuse::_createContext(const vector<string> &fuseOptions) {
-    const bool has_atime_flag = fuseOptions.end() != std::find(fuseOptions.begin(), fuseOptions.end(), "atime");
-    const bool has_noatime_flag = fuseOptions.end() != std::find(fuseOptions.begin(), fuseOptions.end(), "noatime");
-    const bool has_relatime_flag = fuseOptions.end() != std::find(fuseOptions.begin(), fuseOptions.end(), "relatime");
-    const bool has_strictatime_flag = fuseOptions.end() != std::find(fuseOptions.begin(), fuseOptions.end(), "strictatime");
-    const bool has_nodiratime_flag = fuseOptions.end() != std::find(fuseOptions.begin(), fuseOptions.end(), "nodiratime");
+  const bool has_atime_flag = fuseOptions.end() != std::find(fuseOptions.begin(), fuseOptions.end(), "atime");
+  const bool has_noatime_flag = fuseOptions.end() != std::find(fuseOptions.begin(), fuseOptions.end(), "noatime");
+  const bool has_relatime_flag = fuseOptions.end() != std::find(fuseOptions.begin(), fuseOptions.end(), "relatime");
+  const bool has_strictatime_flag = fuseOptions.end() != std::find(fuseOptions.begin(), fuseOptions.end(), "strictatime");
+  const bool has_nodiratime_flag = fuseOptions.end() != std::find(fuseOptions.begin(), fuseOptions.end(), "nodiratime");
 
-    // Default is NOATIME, this reduces the probability for synchronization conflicts
-    _context = Context(noatime());
+  // Default is NOATIME, this reduces the probability for synchronization conflicts
+  _context = Context(noatime());
 
-    if (has_noatime_flag) {
-        ASSERT(!has_atime_flag, "Cannot have both, noatime and atime flags set.");
-        ASSERT(!has_relatime_flag, "Cannot have both, noatime and relatime flags set.");
-        ASSERT(!has_strictatime_flag, "Cannot have both, noatime and strictatime flags set.");
-        // note: can have nodiratime flag set but that is ignored because it is already included in the noatime policy.
-        _context->setTimestampUpdateBehavior(noatime());
-    } else if (has_relatime_flag) {
-        // note: can have atime and relatime both set, they're identical
-        ASSERT(!has_noatime_flag, "This shouldn't happen, or we would have hit a case above.");
-        ASSERT(!has_strictatime_flag, "Cannot have both, relatime and strictatime flags set.");
-        if (has_nodiratime_flag) {
-            _context->setTimestampUpdateBehavior(nodiratime_relatime());
-        } else {
-            _context->setTimestampUpdateBehavior(relatime());
-        }
-    } else if (has_atime_flag) {
-        // note: can have atime and relatime both set, they're identical
-        ASSERT(!has_noatime_flag, "This shouldn't happen, or we would have hit a case above");
-        ASSERT(!has_strictatime_flag, "Cannot have both, atime and strictatime flags set.");
-        if (has_nodiratime_flag) {
-            _context->setTimestampUpdateBehavior(nodiratime_relatime());
-        } else {
-            _context->setTimestampUpdateBehavior(relatime());
-        }
-    } else if (has_strictatime_flag) {
-        ASSERT(!has_noatime_flag, "This shouldn't happen, or we would have hit a case above");
-        ASSERT(!has_atime_flag, "This shouldn't happen, or we would have hit a case above");
-        ASSERT(!has_relatime_flag, "This shouldn't happen, or we would have hit a case above");
-        if (has_nodiratime_flag) {
-            _context->setTimestampUpdateBehavior(nodiratime_strictatime());
-        } else {
-            _context->setTimestampUpdateBehavior(strictatime());
-        }
-    } else if (has_nodiratime_flag) {
-        ASSERT(!has_noatime_flag, "This shouldn't happen, or we would have hit a case above");
-        ASSERT(!has_atime_flag, "This shouldn't happen, or we would have hit a case above");
-        ASSERT(!has_relatime_flag, "This shouldn't happen, or we would have hit a case above");
-        ASSERT(!has_strictatime_flag, "This shouldn't happen, or we would have hit a case above");
-        _context->setTimestampUpdateBehavior(noatime()); // use noatime by default
+  if (has_noatime_flag) {
+    ASSERT(!has_atime_flag, "Cannot have both, noatime and atime flags set.");
+    ASSERT(!has_relatime_flag, "Cannot have both, noatime and relatime flags set.");
+    ASSERT(!has_strictatime_flag, "Cannot have both, noatime and strictatime flags set.");
+    // note: can have nodiratime flag set but that is ignored because it is already included in the noatime policy.
+    _context->setTimestampUpdateBehavior(noatime());
+  } else if (has_relatime_flag) {
+    // note: can have atime and relatime both set, they're identical
+    ASSERT(!has_noatime_flag, "This shouldn't happen, or we would have hit a case above.");
+    ASSERT(!has_strictatime_flag, "Cannot have both, relatime and strictatime flags set.");
+    if (has_nodiratime_flag) {
+      _context->setTimestampUpdateBehavior(nodiratime_relatime());
+    } else {
+      _context->setTimestampUpdateBehavior(relatime());
     }
+  } else if (has_atime_flag) {
+    // note: can have atime and relatime both set, they're identical
+    ASSERT(!has_noatime_flag, "This shouldn't happen, or we would have hit a case above");
+    ASSERT(!has_strictatime_flag, "Cannot have both, atime and strictatime flags set.");
+    if (has_nodiratime_flag) {
+      _context->setTimestampUpdateBehavior(nodiratime_relatime());
+    } else {
+      _context->setTimestampUpdateBehavior(relatime());
+    }
+  } else if (has_strictatime_flag) {
+    ASSERT(!has_noatime_flag, "This shouldn't happen, or we would have hit a case above");
+    ASSERT(!has_atime_flag, "This shouldn't happen, or we would have hit a case above");
+    ASSERT(!has_relatime_flag, "This shouldn't happen, or we would have hit a case above");
+    if (has_nodiratime_flag) {
+      _context->setTimestampUpdateBehavior(nodiratime_strictatime());
+    } else {
+      _context->setTimestampUpdateBehavior(strictatime());
+    }
+  } else if (has_nodiratime_flag) {
+    ASSERT(!has_noatime_flag, "This shouldn't happen, or we would have hit a case above");
+    ASSERT(!has_atime_flag, "This shouldn't happen, or we would have hit a case above");
+    ASSERT(!has_relatime_flag, "This shouldn't happen, or we would have hit a case above");
+    ASSERT(!has_strictatime_flag, "This shouldn't happen, or we would have hit a case above");
+    _context->setTimestampUpdateBehavior(noatime()); // use noatime by default
+  }
 }
 
 vector<char *> Fuse::_build_argv(const bf::path &mountdir, const vector<string> &fuseOptions) {
@@ -489,8 +520,8 @@ void Fuse::unmount(const bf::path& mountdir, bool force) {
   BOOL success = DokanRemoveMountPoint(mountdir_.c_str());
   int returncode = success ? 0 : -1;
 #else
-  std::vector<std::string> args = force ? std::vector<std::string>({"-u", mountdir.string()}) : std::vector<std::string>({"-u", "-z", mountdir.string()});  // "-z" takes care that if the filesystem can't be unmounted right now because something is opened, it will be unmounted as soon as it can be.
-  int returncode = cpputils::Subprocess::call("fusermount", args, "").exitcode;
+  const std::vector<std::string> args = force ? std::vector<std::string>({"-u", mountdir.string()}) : std::vector<std::string>({"-u", "-z", mountdir.string()});  // "-z" takes care that if the filesystem can't be unmounted right now because something is opened, it will be unmounted as soon as it can be.
+  const int returncode = cpputils::Subprocess::call("fusermount", args, "").exitcode;
 #endif
   if (returncode != 0) {
     throw std::runtime_error("Could not unmount filesystem");
@@ -498,7 +529,7 @@ void Fuse::unmount(const bf::path& mountdir, bool force) {
 }
 
 int Fuse::getattr(const bf::path &path, fspp::fuse::STAT *stbuf) {
-  ThreadNameForDebugging _threadName("getattr");
+  const ThreadNameForDebugging _threadName("getattr");
 #ifdef FSPP_LOG
   LOG(DEBUG, "getattr({}, _, _)", path);
 #endif
@@ -527,7 +558,7 @@ int Fuse::getattr(const bf::path &path, fspp::fuse::STAT *stbuf) {
 }
 
 int Fuse::fgetattr(const bf::path &path, fspp::fuse::STAT *stbuf, fuse_file_info *fileinfo) {
-  ThreadNameForDebugging _threadName("fgetattr");
+  const ThreadNameForDebugging _threadName("fgetattr");
 #ifdef FSPP_LOG
   LOG(DEBUG, "fgetattr({}, _, _)", path);
 #endif
@@ -538,7 +569,7 @@ int Fuse::fgetattr(const bf::path &path, fspp::fuse::STAT *stbuf, fuse_file_info
   // underlying base directory instead of doing the fgetattr().
   // TODO Check if necessary
   if (path.string() == "/") {
-    int result = getattr(path, stbuf);
+    const int result = getattr(path, stbuf);
 #ifdef FSPP_LOG
     LOG(DEBUG, "fgetattr({}, _, _): success", path);
 #endif
@@ -570,7 +601,7 @@ int Fuse::fgetattr(const bf::path &path, fspp::fuse::STAT *stbuf, fuse_file_info
 }
 
 int Fuse::readlink(const bf::path &path, char *buf, size_t size) {
-  ThreadNameForDebugging _threadName("readlink");
+  const ThreadNameForDebugging _threadName("readlink");
 #ifdef FSPP_LOG
   LOG(DEBUG, "readlink({}, _, {})", path, size);
 #endif
@@ -602,25 +633,25 @@ int Fuse::mknod(const bf::path &path, ::mode_t mode, dev_t rdev) {
   UNUSED(rdev);
   UNUSED(mode);
   UNUSED(path);
-  ThreadNameForDebugging _threadName("mknod");
+  const ThreadNameForDebugging _threadName("mknod");
   LOG(WARN, "Called non-implemented mknod({}, {}, _)", path.string(), mode);
   return ENOSYS;
 }
 
 int Fuse::mkdir(const bf::path &path, ::mode_t mode) {
-  ThreadNameForDebugging _threadName("mkdir");
+  const ThreadNameForDebugging _threadName("mkdir");
 #ifdef FSPP_LOG
   LOG(DEBUG, "mkdir({}, {})", path.string(), mode);
 #endif
   try {
     ASSERT(is_valid_fspp_path(path), "has to be an absolute path");
-	// DokanY seems to call mkdir("/"). Ignore that
-	if ("/" == path) {
+    // DokanY seems to call mkdir("/"). Ignore that
+    if ("/" == path) {
 #ifdef FSPP_LOG
-        LOG(DEBUG, "mkdir({}, {}): ignored", path.string(), mode);
+      LOG(DEBUG, "mkdir({}, {}): ignored", path.string(), mode);
 #endif
-		return 0;
-	}
+      return 0;
+    }
 
     auto context = fuse_get_context();
     _fs->mkdir(path, mode, context->uid, context->gid);
@@ -646,7 +677,7 @@ int Fuse::mkdir(const bf::path &path, ::mode_t mode) {
 }
 
 int Fuse::unlink(const bf::path &path) {
-  ThreadNameForDebugging _threadName("unlink");
+  const ThreadNameForDebugging _threadName("unlink");
 #ifdef FSPP_LOG
   LOG(DEBUG, "unlink({})", path);
 #endif
@@ -675,7 +706,7 @@ int Fuse::unlink(const bf::path &path) {
 }
 
 int Fuse::rmdir(const bf::path &path) {
-  ThreadNameForDebugging _threadName("rmdir");
+  const ThreadNameForDebugging _threadName("rmdir");
 #ifdef FSPP_LOG
   LOG(DEBUG, "rmdir({})", path);
 #endif
@@ -704,13 +735,13 @@ int Fuse::rmdir(const bf::path &path) {
 }
 
 int Fuse::symlink(const bf::path &to, const bf::path &from) {
-  ThreadNameForDebugging _threadName("symlink");
+  const ThreadNameForDebugging _threadName("symlink");
 #ifdef FSPP_LOG
   LOG(DEBUG, "symlink({}, {})", to, from);
 #endif
   try {
     ASSERT(is_valid_fspp_path(from), "has to be an absolute path");
-	auto context = fuse_get_context();
+    auto context = fuse_get_context();
     _fs->createSymlink(to, from, context->uid, context->gid);
 #ifdef FSPP_LOG
     LOG(DEBUG, "symlink({}, {}): success", to, from);
@@ -734,7 +765,7 @@ int Fuse::symlink(const bf::path &to, const bf::path &from) {
 }
 
 int Fuse::rename(const bf::path &from, const bf::path &to) {
-  ThreadNameForDebugging _threadName("rename");
+  const ThreadNameForDebugging _threadName("rename");
 #ifdef FSPP_LOG
   LOG(DEBUG, "rename({}, {})", from, to);
 #endif
@@ -765,7 +796,7 @@ int Fuse::rename(const bf::path &from, const bf::path &to) {
 
 //TODO
 int Fuse::link(const bf::path &from, const bf::path &to) {
-  ThreadNameForDebugging _threadName("link");
+  const ThreadNameForDebugging _threadName("link");
   LOG(WARN, "NOT IMPLEMENTED: link({}, {})", from.string(), to.string());
   //auto real_from = _impl->RootDir() / from;
   //auto real_to = _impl->RootDir() / to;
@@ -775,17 +806,17 @@ int Fuse::link(const bf::path &from, const bf::path &to) {
 }
 
 int Fuse::chmod(const bf::path &path, ::mode_t mode) {
-  ThreadNameForDebugging _threadName("chmod");
+  const ThreadNameForDebugging _threadName("chmod");
 #ifdef FSPP_LOG
   LOG(DEBUG, "chmod({}, {})", path, mode);
 #endif
   try {
     ASSERT(is_valid_fspp_path(path), "has to be an absolute path");
-	_fs->chmod(path, mode);
+    _fs->chmod(path, mode);
 #ifdef FSPP_LOG
     LOG(DEBUG, "chmod({}, {}): success", path, mode);
 #endif
-	return 0;
+    return 0;
   } catch(const cpputils::AssertFailed &e) {
     LOG(ERR, "AssertFailed in Fuse::chmod: {}", e.what());
     return -EIO;
@@ -793,7 +824,7 @@ int Fuse::chmod(const bf::path &path, ::mode_t mode) {
 #ifdef FSPP_LOG
     LOG(WARN, "chmod({}, {}): failed with errno {}", path, mode, e.getErrno());
 #endif
-	return -e.getErrno();
+    return -e.getErrno();
   } catch(const std::exception &e) {
     _logException(e);
     return -EIO;
@@ -804,17 +835,17 @@ int Fuse::chmod(const bf::path &path, ::mode_t mode) {
 }
 
 int Fuse::chown(const bf::path &path, ::uid_t uid, ::gid_t gid) {
-  ThreadNameForDebugging _threadName("chown");
+  const ThreadNameForDebugging _threadName("chown");
 #ifdef FSPP_LOG
   LOG(DEBUG, "chown({}, {}, {})", path, uid, gid);
 #endif
   try {
     ASSERT(is_valid_fspp_path(path), "has to be an absolute path");
-	_fs->chown(path, uid, gid);
+    _fs->chown(path, uid, gid);
 #ifdef FSPP_LOG
     LOG(DEBUG, "chown({}, {}, {}): success", path, uid, gid);
 #endif
-	return 0;
+    return 0;
   } catch(const cpputils::AssertFailed &e) {
     LOG(ERR, "AssertFailed in Fuse::chown: {}", e.what());
     return -EIO;
@@ -822,7 +853,7 @@ int Fuse::chown(const bf::path &path, ::uid_t uid, ::gid_t gid) {
 #ifdef FSPP_LOG
     LOG(WARN, "chown({}, {}, {}): failed with errno {}", path, uid, gid, e.getErrno());
 #endif
-	return -e.getErrno();
+    return -e.getErrno();
   } catch(const std::exception &e) {
     _logException(e);
     return -EIO;
@@ -833,7 +864,7 @@ int Fuse::chown(const bf::path &path, ::uid_t uid, ::gid_t gid) {
 }
 
 int Fuse::truncate(const bf::path &path, int64_t size) {
-  ThreadNameForDebugging _threadName("truncate");
+  const ThreadNameForDebugging _threadName("truncate");
 #ifdef FSPP_LOG
   LOG(DEBUG, "truncate({}, {})", path, size);
 #endif
@@ -862,7 +893,7 @@ int Fuse::truncate(const bf::path &path, int64_t size) {
 }
 
 int Fuse::ftruncate(const bf::path &path, int64_t size, fuse_file_info *fileinfo) {
-  ThreadNameForDebugging _threadName("ftruncate");
+  const ThreadNameForDebugging _threadName("ftruncate");
 #ifdef FSPP_LOG
   LOG(DEBUG, "ftruncate({}, {})", path, size);
 #endif
@@ -891,7 +922,7 @@ int Fuse::ftruncate(const bf::path &path, int64_t size, fuse_file_info *fileinfo
 }
 
 int Fuse::utimens(const bf::path &path, const std::array<timespec, 2> times) {
-  ThreadNameForDebugging _threadName("utimens");
+  const ThreadNameForDebugging _threadName("utimens");
 #ifdef FSPP_LOG
   LOG(DEBUG, "utimens({}, _)", path);
 #endif
@@ -920,7 +951,7 @@ int Fuse::utimens(const bf::path &path, const std::array<timespec, 2> times) {
 }
 
 int Fuse::open(const bf::path &path, fuse_file_info *fileinfo) {
-  ThreadNameForDebugging _threadName("open");
+  const ThreadNameForDebugging _threadName("open");
 #ifdef FSPP_LOG
   LOG(DEBUG, "open({}, _)", path);
 #endif
@@ -949,7 +980,7 @@ int Fuse::open(const bf::path &path, fuse_file_info *fileinfo) {
 }
 
 int Fuse::release(const bf::path &path, fuse_file_info *fileinfo) {
-  ThreadNameForDebugging _threadName("release");
+  const ThreadNameForDebugging _threadName("release");
 #ifdef FSPP_LOG
   LOG(DEBUG, "release({}, _)", path);
 #endif
@@ -978,13 +1009,13 @@ int Fuse::release(const bf::path &path, fuse_file_info *fileinfo) {
 }
 
 int Fuse::read(const bf::path &path, char *buf, size_t size, int64_t offset, fuse_file_info *fileinfo) {
-  ThreadNameForDebugging _threadName("read");
+  const ThreadNameForDebugging _threadName("read");
 #ifdef FSPP_LOG
   LOG(DEBUG, "read({}, _, {}, {}, _)", path, size, offset);
 #endif
   UNUSED(path);
   try {
-    int result = _fs->read(fileinfo->fh, buf, fspp::num_bytes_t(size), fspp::num_bytes_t(offset)).value();
+    const int result = _fs->read(fileinfo->fh, buf, fspp::num_bytes_t(size), fspp::num_bytes_t(offset)).value();
 #ifdef FSPP_LOG
     LOG(DEBUG, "read({}, _, {}, {}, _): success with {}", path, size, offset, result);
 #endif
@@ -1007,7 +1038,7 @@ int Fuse::read(const bf::path &path, char *buf, size_t size, int64_t offset, fus
 }
 
 int Fuse::write(const bf::path &path, const char *buf, size_t size, int64_t offset, fuse_file_info *fileinfo) {
-  ThreadNameForDebugging _threadName("write");
+  const ThreadNameForDebugging _threadName("write");
 #ifdef FSPP_LOG
   LOG(DEBUG, "write({}, _, {}, {}, _)", path, size, offset);
 #endif
@@ -1036,7 +1067,7 @@ int Fuse::write(const bf::path &path, const char *buf, size_t size, int64_t offs
 }
 
 int Fuse::statfs(const bf::path &path, struct ::statvfs *fsstat) {
-  ThreadNameForDebugging _threadName("statfs");
+  const ThreadNameForDebugging _threadName("statfs");
 #ifdef FSPP_LOG
   LOG(DEBUG, "statfs({}, _)", path);
 #endif
@@ -1066,7 +1097,7 @@ int Fuse::statfs(const bf::path &path, struct ::statvfs *fsstat) {
 }
 
 int Fuse::flush(const bf::path &path, fuse_file_info *fileinfo) {
-  ThreadNameForDebugging _threadName("flush");
+  const ThreadNameForDebugging _threadName("flush");
 #ifdef FSPP_LOG
   LOG(WARN, "flush({}, _)", path);
 #endif
@@ -1095,7 +1126,7 @@ int Fuse::flush(const bf::path &path, fuse_file_info *fileinfo) {
 }
 
 int Fuse::fsync(const bf::path &path, int datasync, fuse_file_info *fileinfo) {
-  ThreadNameForDebugging _threadName("fsync");
+  const ThreadNameForDebugging _threadName("fsync");
 #ifdef FSPP_LOG
   LOG(DEBUG, "fsync({}, {}, _)", path, datasync);
 #endif
@@ -1107,7 +1138,7 @@ int Fuse::fsync(const bf::path &path, int datasync, fuse_file_info *fileinfo) {
       _fs->fsync(fileinfo->fh);
     }
 #ifdef FSPP_LOG
-  LOG(DEBUG, "fsync({}, {}, _): success", path, datasync);
+    LOG(DEBUG, "fsync({}, {}, _): success", path, datasync);
 #endif
     return 0;
   } catch(const cpputils::AssertFailed &e) {
@@ -1130,14 +1161,14 @@ int Fuse::fsync(const bf::path &path, int datasync, fuse_file_info *fileinfo) {
 int Fuse::opendir(const bf::path &path, fuse_file_info *fileinfo) {
   UNUSED(path);
   UNUSED(fileinfo);
-  ThreadNameForDebugging _threadName("opendir");
+  const ThreadNameForDebugging _threadName("opendir");
   //LOG(DEBUG, "opendir({}, _)", path);
   //We don't need opendir, because readdir works directly on the path
   return 0;
 }
 
 int Fuse::readdir(const bf::path &path, void *buf, fuse_fill_dir_t filler, int64_t offset, fuse_file_info *fileinfo) {
-  ThreadNameForDebugging _threadName("readdir");
+  const ThreadNameForDebugging _threadName("readdir");
 #ifdef FSPP_LOG
   LOG(DEBUG, "readdir({}, _, _, {}, _)", path, offset);
 #endif
@@ -1192,7 +1223,7 @@ int Fuse::readdir(const bf::path &path, void *buf, fuse_fill_dir_t filler, int64
 int Fuse::releasedir(const bf::path &path, fuse_file_info *fileinfo) {
   UNUSED(path);
   UNUSED(fileinfo);
-  ThreadNameForDebugging _threadName("releasedir");
+  const ThreadNameForDebugging _threadName("releasedir");
   //LOG(DEBUG, "releasedir({}, _)", path);
   //We don't need releasedir, because readdir works directly on the path
   return 0;
@@ -1203,14 +1234,14 @@ int Fuse::fsyncdir(const bf::path &path, int datasync, fuse_file_info *fileinfo)
   UNUSED(fileinfo);
   UNUSED(datasync);
   UNUSED(path);
-  ThreadNameForDebugging _threadName("fsyncdir");
+  const ThreadNameForDebugging _threadName("fsyncdir");
   //LOG(WARN, "Called non-implemented fsyncdir({}, {}, _)", path, datasync);
   return 0;
 }
 
 void Fuse::init(fuse_conn_info *conn) {
   UNUSED(conn);
-  ThreadNameForDebugging _threadName("init");
+  const ThreadNameForDebugging _threadName("init");
   _fs = _init(this);
 
   ASSERT(_context != boost::none, "Context should have been initialized in Fuse::run() but somehow didn't");
@@ -1227,7 +1258,7 @@ void Fuse::init(fuse_conn_info *conn) {
 }
 
 void Fuse::destroy() {
-  ThreadNameForDebugging _threadName("destroy");
+  const ThreadNameForDebugging _threadName("destroy");
   _fs = make_shared<InvalidFilesystem>();
   LOG(INFO, "Filesystem stopped.");
   _running = false;
@@ -1235,7 +1266,7 @@ void Fuse::destroy() {
 }
 
 int Fuse::access(const bf::path &path, int mask) {
-  ThreadNameForDebugging _threadName("access");
+  const ThreadNameForDebugging _threadName("access");
 #ifdef FSPP_LOG
   LOG(DEBUG, "access({}, {})", path, mask);
 #endif
@@ -1264,7 +1295,7 @@ int Fuse::access(const bf::path &path, int mask) {
 }
 
 int Fuse::create(const bf::path &path, ::mode_t mode, fuse_file_info *fileinfo) {
-  ThreadNameForDebugging _threadName("create");
+  const ThreadNameForDebugging _threadName("create");
 #ifdef FSPP_LOG
   LOG(DEBUG, "create({}, {}, _)", path, mode);
 #endif

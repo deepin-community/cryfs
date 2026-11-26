@@ -25,7 +25,7 @@ private:
   std::unordered_map<int, cpputils::unique_ref<Entry>> _entries;
   int _id_counter;
 
-  DISALLOW_COPY_AND_ASSIGN(IdList<Entry>);
+  DISALLOW_COPY_AND_ASSIGN(IdList);
 };
 
 template<class Entry>
@@ -40,7 +40,7 @@ IdList<Entry>::~IdList() {
 template<class Entry>
 int IdList<Entry>::add(cpputils::unique_ref<Entry> entry) {
   //TODO Reuse IDs (ids = descriptors)
-  int new_id = ++_id_counter;
+  const int new_id = ++_id_counter;
   _entries.emplace(new_id, std::move(entry));
   return new_id;
 }

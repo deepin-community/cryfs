@@ -1,26 +1,70 @@
-cryfs (0.11.4-1deepin4) unstable; urgency=medium
+cryfs (1.0.3-2) unstable; urgency=medium
 
-  * fix: Fix build fail on mips
+  * Bump Standards-Version to 4.7.4.
+  * Bump debhelper-compat to 14.
+  * Update d/rules to support no-check and debug build.
+  * Switch from debug to release build in d/rules.
+  * Remove Priority optional in d/control.
+  * Remove Rules-Requires-Root in d/control.
 
- -- wangrong <wangrong@uniontech.com>  Thu, 05 Feb 2026 17:20:51 +0800
+ -- Syed Shahrukh Hussain <syed.shahrukh@ossrevival.org>  Sat, 05 Sep 2026 10:50:11 +0500
 
-cryfs (0.11.4-1deepin3) unstable; urgency=medium
+cryfs (1.0.3-1) unstable; urgency=medium
 
-  * chore: improve debian build rules with architecture detection
+  * New upstream version 1.0.3.
+  * Update debian copyright in d/copyright.
+  * Remove versioned boost dependencies from d/control (Closes: #1128106).
+  * Remove libboost-system-dev dependency from d/control.
+  * Update patches for new release.
+  * Bump Standards-Version to 4.7.3.
+  * Update d/watch to version 5.
+  * Update d/watch to include tar signature file.
+  * Add signature file to d/upstream.
 
- -- Liu Zhangjian <liuzhangjian@uniontech.com>  Wed, 04 Feb 2026 13:20:48 +0800
+ -- Syed Shahrukh Hussain <syed.shahrukh@ossrevival.org>  Wed, 11 Mar 2026 09:56:11 +0500
 
-cryfs (0.11.4-1deepin2) unstable; urgency=medium
+cryfs (1.0.1-1) unstable; urgency=medium
 
-  * feat: add SM4 cipher support and update build configuration
+  * New upstream version 1.0.1.
+  * Adopt package (Closes: #1093400).
+  * Added patch to support fuse3 (Closes: #1084454).
+  * Added patch to fix boost 1.88 build failure (Closes: #1110579).
+  * Updated system libcrypto++ patch.
+  * Updated d/copyright with new files.
+  * Updated d/watch file to watch for tags.
+  * Updated d/gbp.conf file.
 
- -- Liu Zhangjian <liuzhangjian@uniontech.com>  Fri, 23 Jan 2026 13:19:43 +0800
+ -- Syed Shahrukh Hussain <syed.shahrukh@ossrevival.org>  Tue, 25 Nov 2025 12:56:11 +0500
 
-cryfs (0.11.4-1deepin1) unstable; urgency=medium
+cryfs (0.11.4-5) unstable; urgency=medium
 
-  * Fix python3.12 build error.
+  * QA upload.
+  * Build using the default gcc. (Closes: #1114085)
+  * Backport upstream fix for FTBFS with CMake 4. (Closes: #1112816)
+  * Use the system libcrypto++. (Closes: #1108008)
+  * Use the system GoogleTest.
+  * Apply patch from Aurelien Jarno to enable parallel building and
+    fix nocheck. (Closes: #1086870)
 
- -- xiangzelong <xiangzelong@deepin.org>  Wed, 07 Aug 2024 17:58:24 +0800
+ -- Adrian Bunk <bunk@debian.org>  Sat, 06 Sep 2025 22:04:23 +0300
+
+cryfs (0.11.4-4) unstable; urgency=medium
+
+  * Orphaning - Set Maintainer to Debian QA.
+
+ -- David Steele <steele@debian.org>  Sat, 06 Sep 2025 10:45:52 -0400
+
+cryfs (0.11.4-3) unstable; urgency=medium
+
+  * Move Debian hosting home to Salsa.
+
+ -- David Steele <steele@debian.org>  Fri, 17 Jan 2025 12:57:32 -0500
+
+cryfs (0.11.4-2) unstable; urgency=medium
+
+  * Upgrade build to gcc version 14.
+
+ -- David Steele <steele@debian.org>  Sat, 17 Aug 2024 22:45:55 -0400
 
 cryfs (0.11.4-1) unstable; urgency=medium
 

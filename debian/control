@@ -1,33 +1,32 @@
 Source: cryfs
-Maintainer: David Steele <steele@debian.org>
+Maintainer: Syed Shahrukh Hussain <syed.shahrukh@ossrevival.org>
 Section: utils
-Priority: optional
-Build-Depends: debhelper-compat (= 13),
+Build-Depends: debhelper-compat (= 14),
                cmake,
-               pkg-config,
+               pkgconf,
                librange-v3-dev,
                libspdlog-dev,
-               openssl,
                libcurl4-openssl-dev,
                libboost-filesystem-dev,
-               libboost-system-dev,
                libboost-chrono-dev,
                libboost-program-options-dev,
+               libboost-process-dev,
                libboost-thread-dev,
                libcrypto++-dev (>= 5.6.4),
                libssl-dev,
-               libfuse-dev,
+               libfuse3-dev,
                python3-all,
                python3-versioneer,
-Rules-Requires-Root: no
-Standards-Version: 4.6.0.1
-Vcs-Browser: https://github.com/davesteele/cryfs
-Vcs-Git: https://github.com/davesteele/cryfs.git -b debian
+               libgtest-dev,
+               libgmock-dev,
+Standards-Version: 4.7.4
+Vcs-Browser: https://salsa.debian.org/syed/cryfs
+Vcs-Git: https://salsa.debian.org/syed/cryfs.git -b debian/latest
 Homepage: https://www.cryfs.org/
 
 Package: cryfs
 Architecture: linux-any
-Depends: fuse,
+Depends: fuse3,
          ${misc:Depends},
          ${shlibs:Depends}
 Description: encrypt your files and store them in the cloud

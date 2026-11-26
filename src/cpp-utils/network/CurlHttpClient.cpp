@@ -1,6 +1,5 @@
 // Base version taken from https://techoverflow.net/blog/2013/03/15/c-simple-http-download-using-libcurl-easy-api/
-
-#if !defined(_MSC_VER)
+#ifdef CRYFS_UPDATE_CHECKS
 
 #include "CurlHttpClient.h"
 #include <sstream>
@@ -19,7 +18,7 @@ namespace cpputils {
 	uint32_t CurlHttpClient::CurlInitializerRAII::_refcount = 0;
 
 	CurlHttpClient::CurlInitializerRAII::CurlInitializerRAII() {
-		unique_lock<mutex> lock(_mutex);
+		const unique_lock<mutex> lock(_mutex);
 		if (0 == _refcount) {
 			curl_global_init(CURL_GLOBAL_ALL);
 		}
@@ -27,7 +26,7 @@ namespace cpputils {
 	}
 
 	CurlHttpClient::CurlInitializerRAII::~CurlInitializerRAII() {
-		unique_lock<mutex> lock(_mutex);
+		const unique_lock<mutex> lock(_mutex);
 		_refcount -= 1;
 		if (0 == _refcount) {
 			curl_global_cleanup();
@@ -39,8 +38,8 @@ namespace cpputils {
         return size * nmemb;
     }
 
-    CurlHttpClient::CurlHttpClient(): curlInitializer(), curl() {
-        curl = curl_easy_init();
+    CurlHttpClient::CurlHttpClient(): curlInitializer(), curl(curl_easy_init()) {
+        
     }
 
     CurlHttpClient::~CurlHttpClient() {
@@ -60,7 +59,7 @@ namespace cpputils {
             curl_easy_setopt(curl, CURLOPT_TIMEOUT_MS, *timeoutMsec);
         }
         // Perform the request, res will get the return code
-        CURLcode res = curl_easy_perform(curl);
+        const CURLcode res = curl_easy_perform(curl);
         // Check for errors
         if (res != CURLE_OK) {
 			throw std::runtime_error("Curl Error " + std::to_string(res) + ": " + curl_easy_strerror(res));

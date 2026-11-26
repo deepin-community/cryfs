@@ -20,6 +20,13 @@ using boost::optional;
 using boost::none;
 using namespace cpputils::logging;
 
+#if defined(_MSC_VER)
+// Haven't figured out how to make it run in background on Windows yet, so let's just force it to run in foreground.
+#   define FORCE_RUN_IN_FOREGROUND
+#   include <cpp-utils/logging/logging.h>
+using namespace cpputils::logging;
+#endif
+
 Parser::Parser(int argc, const char **argv)
         :_options(_argsToVector(argc, argv)) {
 }
@@ -41,7 +48,7 @@ ProgramOptions Parser::parse(const vector<string> &supportedCiphers) const {
         LOG(WARN, "Passing fuse mount options after a double dash '--' is deprecated. Please pass them directly (e.g. 'cryfs basedir mountdir -o allow_other'");
     }
 
-    po::variables_map vm = _parseOptionsOrShowHelp(cryfsOptions, supportedCiphers);
+    const po::variables_map vm = _parseOptionsOrShowHelp(cryfsOptions, supportedCiphers);
 
     if (!vm.count("base-dir")) {
         _showHelpAndExit("Please specify a base directory.", ErrorCode::InvalidArguments);
@@ -55,11 +62,18 @@ ProgramOptions Parser::parse(const vector<string> &supportedCiphers) const {
     if (vm.count("config")) {
         configfile = bf::absolute(vm["config"].as<string>());
     }
-    bool foreground = vm.count("foreground");
-    bool allowFilesystemUpgrade = vm.count("allow-filesystem-upgrade");
-    bool allowReplacedFilesystem = vm.count("allow-replaced-filesystem");
-    bool createMissingBasedir = vm.count("create-missing-basedir");
-    bool createMissingMountpoint = vm.count("create-missing-mountpoint");
+#ifndef FORCE_RUN_IN_FOREGROUND
+    const bool foreground = vm.count("foreground");
+#else
+    if (vm.count("foreground")) {
+        LOG(WARN, "The `-f` flag currently does not have an effect on Windows. Cryfs will always run in foreground. Future versions may change that behavior.");
+    }
+    const bool foreground = true;
+#endif
+    const bool allowFilesystemUpgrade = vm.count("allow-filesystem-upgrade");
+    const bool allowReplacedFilesystem = vm.count("allow-replaced-filesystem");
+    const bool createMissingBasedir = vm.count("create-missing-basedir");
+    const bool createMissingMountpoint = vm.count("create-missing-mountpoint");
     optional<double> unmountAfterIdleMinutes = 0.0;  // first setting to 0 and then to none is somehow needed to silence a GCC warning from -Wmaybe-uninitialized
     unmountAfterIdleMinutes = none;
     if (vm.count("unmount-idle")) {
@@ -78,7 +92,7 @@ ProgramOptions Parser::parse(const vector<string> &supportedCiphers) const {
     if (vm.count("blocksize")) {
         blocksizeBytes = vm["blocksize"].as<uint32_t>();
     }
-    bool allowIntegrityViolations = vm.count("allow-integrity-violations");
+    const bool allowIntegrityViolations = vm.count("allow-integrity-violations");
     optional<bool> missingBlockIsIntegrityViolation = none;
     if (vm.count("missing-block-is-integrity-violation")) {
         missingBlockIsIntegrityViolation = vm["missing-block-is-integrity-violation"].as<bool>();

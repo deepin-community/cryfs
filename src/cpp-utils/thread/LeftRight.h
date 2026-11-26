@@ -38,7 +38,7 @@ public:
 
         // wait until any potentially running writers are finished
         {
-            std::unique_lock<std::mutex> lock(_writeMutex);
+            const std::unique_lock<std::mutex> lock(_writeMutex);
         }
 
         // wait until any potentially running readers are finished
@@ -49,26 +49,26 @@ public:
 
     template <typename F>
     auto read(F&& readFunc) const {
-        detail::IncrementRAII _increment_counter(&_counters[_foregroundCounterIndex.load()]); // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
+        const detail::IncrementRAII _increment_counter(&_counters[_foregroundCounterIndex.load()]); // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
 
         if(_inDestruction.load()) {
             throw std::logic_error("Issued LeftRight::read() after the destructor started running");
         }
 
-        return readFunc(_data[_foregroundDataIndex.load()]); // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
+        return std::forward<F>(readFunc)(_data[_foregroundDataIndex.load()]); // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
     }
 
     // Throwing an exception in writeFunc is ok but causes the state to be either the old or the new state,
     // depending on if the first or the second call to writeFunc threw.
     template <typename F>
     auto write(F&& writeFunc) {
-        std::unique_lock<std::mutex> lock(_writeMutex);
+        const std::unique_lock<std::mutex> lock(_writeMutex);
 
         if(_inDestruction.load()) {
             throw std::logic_error("Issued LeftRight::read() after the destructor started running");
         }
 
-        return _write(writeFunc);
+        return _write(std::forward<F>(writeFunc));
     }
 
 private:

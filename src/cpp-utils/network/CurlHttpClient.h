@@ -2,7 +2,7 @@
 #ifndef MESSMER_CPPUTILS_NETWORK_CURLHTTPCLIENT_HPP
 #define MESSMER_CPPUTILS_NETWORK_CURLHTTPCLIENT_HPP
 
-#if !defined(_MSC_VER)
+#ifdef CRYFS_UPDATE_CHECKS
 
 #include "HttpClient.h"
 #include "../macros.h"
@@ -15,7 +15,7 @@ namespace cpputils {
     public:
         CurlHttpClient();
 
-        ~CurlHttpClient();
+        ~CurlHttpClient() override;
 
         std::string get(const std::string &url, boost::optional<long> timeoutMsec = boost::none) override;
 

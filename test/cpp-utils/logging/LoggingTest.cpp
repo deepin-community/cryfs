@@ -13,7 +13,7 @@ using std::string;
 #if !defined(_MSC_VER) || NDEBUG
 
 TEST_F(LoggingTest, DefaultLoggerIsStderr) {
-    string output = captureStderr([]{
+    const string output = captureStderr([]{
         LOG(INFO, "My log message");
         cpputils::logging::flush();
     });
@@ -24,7 +24,7 @@ TEST_F(LoggingTest, DefaultLoggerIsStderr) {
 
 TEST_F(LoggingTest, SetLogger_NewLoggerIsUsed) {
     setLogger(spdlog::stderr_logger_mt("MyTestLog2"));
-    string output = captureStderr([]{
+    const string output = captureStderr([]{
         LOG(INFO, "My log message");
         cpputils::logging::flush();
     });
@@ -46,7 +46,7 @@ TEST_F(LoggingTest, SetNonStderrLogger_LogsToNewLogger) {
 
 TEST_F(LoggingTest, SetNonStderrLogger_DoesNotLogToStderr) {
     setLogger(mockLogger.get());
-    string output = captureStderr([] {
+    const string output = captureStderr([] {
         logger()->info("My log message");
         cpputils::logging::flush();
     });
@@ -99,6 +99,7 @@ void logAndExit(const string &message) {
 // fork() only forks the main thread. This test ensures that logging doesn't depend on threads that suddenly aren't
 // there anymore after a fork().
 TEST_F(LoggingTest, LoggingAlsoWorksAfterFork) {
+    testing::FLAGS_gtest_death_test_style = "threadsafe";
     setLogger(spdlog::stderr_logger_mt("StderrLogger"));
     EXPECT_EXIT(
         logAndExit("My log message"),
@@ -118,7 +119,7 @@ TEST_F(LoggingTest, MessageIsConstChar) {
 
 TEST_F(LoggingTest, MessageIsString) {
     setLogger(mockLogger.get());
-    string msg = "My log message";
+    const string msg = "My log message";
     LOG(INFO, msg);
     cpputils::logging::flush();
 	// For some reason, the following doesn't seem to work in MSVC. Possibly because of the multiline string?
@@ -128,7 +129,7 @@ TEST_F(LoggingTest, MessageIsString) {
 
 TEST_F(LoggingTest, FormatWithStringPlaceholder) {
     setLogger(mockLogger.get());
-    string str = "placeholder";
+    const string str = "placeholder";
     LOG(INFO, "My log message: {}", str);
     cpputils::logging::flush();
 	// For some reason, the following doesn't seem to work in MSVC. Possibly because of the multiline string?

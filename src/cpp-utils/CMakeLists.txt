@@ -17,7 +17,6 @@ set(SOURCES
         tempfile/TempDir.cpp
         network/HttpClient.cpp
         network/CurlHttpClient.cpp
-		network/WinHttpClient.cpp
         network/FakeHttpClient.cpp
         io/Console.cpp
         io/DontEchoStdinToStdoutRAII.cpp
@@ -65,23 +64,6 @@ if(MSVC)
     target_link_libraries(${PROJECT_NAME} PUBLIC DbgHelp)
 elseif (APPLE)
     target_compile_definitions(${PROJECT_NAME} PRIVATE BOOST_STACKTRACE_GNU_SOURCE_NOT_REQUIRED)
-else()
-    find_program(ADDR2LINE addr2line)
-    if ("${ADDR2LINE}" STREQUAL "ADDR2LINE-NOTFOUND")
-        message(WARNING "addr2line not found. Backtraces will be reduced.")
-    else()
-        message(STATUS "addr2line found. Using it for backtraces.")
-        target_compile_definitions(${PROJECT_NAME} PRIVATE BOOST_STACKTRACE_USE_ADDR2LINE)
-        target_compile_definitions(${PROJECT_NAME} PRIVATE BOOST_STACKTRACE_ADDR2LINE_LOCATION=${ADDR2LINE})
-    endif()
-endif()
-
-if (NOT MSVC)
-  find_package(CURL REQUIRED)
-  target_include_directories(${PROJECT_NAME} PUBLIC ${CURL_INCLUDE_DIRS})
-  target_link_libraries(${PROJECT_NAME} PUBLIC ${CURL_LIBRARIES})
-else()
-  target_link_libraries(${PROJECT_NAME} PUBLIC WinHttp)
 endif()
 
 find_package(Threads REQUIRED)
@@ -89,7 +71,11 @@ target_link_libraries(${PROJECT_NAME} PUBLIC ${CMAKE_THREAD_LIBS_INIT})
 
 target_link_libraries(${PROJECT_NAME} PUBLIC ${CMAKE_DL_LIBS})
 
-target_link_libraries(${PROJECT_NAME} PUBLIC CryfsDependencies_spdlog cryptopp CryfsDependencies_range-v3)
+target_link_libraries(${PROJECT_NAME} PUBLIC CryfsDependencies_spdlog cryfs_vendor_cryptopp CryfsDependencies_range-v3)
+if(CRYFS_UPDATE_CHECKS)
+    target_compile_definitions(${PROJECT_NAME} PUBLIC -DCRYFS_UPDATE_CHECKS)
+    target_link_libraries(${PROJECT_NAME} PUBLIC CryfsDependencies_libcurl)
+endif()
 
 target_add_boost(${PROJECT_NAME})
 target_enable_style_warnings(${PROJECT_NAME})
@@ -97,5 +83,5 @@ target_activate_cpp14(${PROJECT_NAME})
 
 if(MSVC)
     # Required by range-v3, see its README.md
-    target_compile_options(${PROJECT_NAME} PUBLIC /experimental:preprocessor /permissive- /Zc:twoPhase-)
+    target_compile_options(${PROJECT_NAME} PUBLIC /Zc:preprocessor /permissive-)
 endif()

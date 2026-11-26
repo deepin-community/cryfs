@@ -12,7 +12,7 @@
 
 class ConsoleThread {
 public:
-    ConsoleThread(std::ostream &ostr, std::istream &istr): _console(ostr, istr) {}
+    ConsoleThread(std::ostream *ostr, std::istream *istr): _console(ostr, istr) {}
     std::future<unsigned int> ask(const std::string &question, const std::vector<std::string> &options) {
         return std::async(std::launch::async, [this, question, options]() {
             return _console.ask(question, options);
@@ -37,7 +37,7 @@ private:
 
 class ConsoleTest: public ::testing::Test {
 public:
-    ConsoleTest(): _inputStr(), _outputStr(), _input(&_inputStr), _output(&_outputStr), _console(_output, _input) {}
+    ConsoleTest(): _inputStr(), _outputStr(), _input(&_inputStr), _output(&_outputStr), _console(&_output, &_input) {}
 
     void EXPECT_OUTPUT_LINES(std::initializer_list<std::string> lines) {
         for (const std::string &line : lines) {
@@ -49,7 +49,7 @@ public:
         std::string actual;
         std::getline(_output, actual, delimiter);
         EXPECT_EQ(expected, actual);
-        for (char expected_char : expected_after_delimiter) {
+        for (const char expected_char : expected_after_delimiter) {
             char actual_char = 0;
             _output.get(actual_char);
             EXPECT_EQ(expected_char, actual_char);
